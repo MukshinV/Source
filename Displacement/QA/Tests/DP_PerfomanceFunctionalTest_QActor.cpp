@@ -1,6 +1,6 @@
 ﻿
 
-#include "QA/Tests/DP_PerfomanceFunctionalTest_Actor.h"
+#include "QA/Tests/DP_PerfomanceFunctionalTest_QActor.h"
 
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
@@ -8,12 +8,12 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogPerfomanceFunctionalTest, All, All)
 
-ADP_PerfomanceFunctionalTest_Actor::ADP_PerfomanceFunctionalTest_Actor()
+ADP_PerfomanceFunctionalTest_QActor::ADP_PerfomanceFunctionalTest_QActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void ADP_PerfomanceFunctionalTest_Actor::PrepareTest()
+void ADP_PerfomanceFunctionalTest_QActor::PrepareTest()
 {
 	Super::PrepareTest();
 
@@ -40,7 +40,7 @@ void ADP_PerfomanceFunctionalTest_Actor::PrepareTest()
 	}
 }
 
-void ADP_PerfomanceFunctionalTest_Actor::StartTest()
+void ADP_PerfomanceFunctionalTest_QActor::StartTest()
 {
 	Super::StartTest();
 
@@ -56,7 +56,7 @@ void ADP_PerfomanceFunctionalTest_Actor::StartTest()
 	PerfomanceRecorder->BeginPerfomanceRecording(LevelPerfomancePoints);
 }
 
-void ADP_PerfomanceFunctionalTest_Actor::Tick(float DeltaSeconds)
+void ADP_PerfomanceFunctionalTest_QActor::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
@@ -68,7 +68,7 @@ void ADP_PerfomanceFunctionalTest_Actor::Tick(float DeltaSeconds)
 	}
 }
 
-void ADP_PerfomanceFunctionalTest_Actor::FinishTest(EFunctionalTestResult TestResult, const FString& Message)
+void ADP_PerfomanceFunctionalTest_QActor::FinishTest(EFunctionalTestResult TestResult, const FString& Message)
 {
 	if(PerfomanceRecorder)
 	{

@@ -11,6 +11,8 @@ public class Displacement : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
 		PrivateDependencyModuleNames.AddRange(new string[] { "Json", "JsonUtilities" });
 
+		PrivateIncludePaths.AddRange(new string[] { ModuleDirectory });
+		
 		if (Target.Configuration != UnrealTargetConfiguration.Shipping)
 		{
 			PrivateDependencyModuleNames.AddRange(new string[] { "FunctionalTesting" });
