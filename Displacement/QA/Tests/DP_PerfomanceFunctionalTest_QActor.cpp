@@ -20,33 +20,33 @@ void ADP_PerfomanceFunctionalTest_QActor::PrepareTest()
 {
 	Super::PrepareTest();
 
-	CollectPerfomanceTestPoints();
-	SetupActors();
+	TArray<TObjectPtr<ADP_PerfomancePoint_Actor>> levelPerfomancePoints{};
+	
+	CollectPerfomanceTestPoints(levelPerfomancePoints);
+	SetupActors(levelPerfomancePoints);
+	check(PerfomanceRecorder)
+
+	PerfomanceRecorder->OnFinishedRecording().AddUObject(this, &ADP_PerfomanceFunctionalTest_QActor::OnTestFinished);
+	PerfomanceRecorder->BeginPerfomanceRecording(levelPerfomancePoints);
 }
 
-
-void ADP_PerfomanceFunctionalTest_QActor::CollectPerfomanceTestPoints()
+void ADP_PerfomanceFunctionalTest_QActor::CollectPerfomanceTestPoints(PerfPointsArray_T& _perfomancePoints) const
 {
-	UWorld* world = GetWorld();
-	if(!world)
-	{
-		FinishTest(EFunctionalTestResult::Failed, "[FAILED] PerfomanceFunctionalTest: World does not exist");
-		return;
-	}
+	check(GetWorld());
 
-	for (TActorIterator<ADP_PerfomancePoint_Actor> It(world, ADP_PerfomancePoint_Actor::StaticClass()); It; ++It)
+	for (TActorIterator<ADP_PerfomancePoint_Actor> It(GetWorld(), ADP_PerfomancePoint_Actor::StaticClass()); It; ++It)
 	{
-		LevelPerfomancePoints.Add(*It);
+		_perfomancePoints.Add(*It);
 	}
 	
-	if(LevelPerfomancePoints.Num() == 0)
+	if(_perfomancePoints.Num() == 0)
 	{
-		FString levelName = UGameplayStatics::GetCurrentLevelName(world);
+		FString levelName = UGameplayStatics::GetCurrentLevelName(GetWorld());
 		UE_LOG(LogPerfomanceFunctionalTest, Warning, TEXT("No perfomance points was found at level %s"), *levelName);
 	}
 }
 
-void ADP_PerfomanceFunctionalTest_QActor::SetupActors()
+void ADP_PerfomanceFunctionalTest_QActor::SetupActors(PerfPointsArray_T& _perfomancePoints)
 {
 	UWorld* world = GetWorld();
 	
@@ -77,36 +77,12 @@ void ADP_PerfomanceFunctionalTest_QActor::SetupActors()
 	}
 	
 	PerfomanceRecorder = Cast<UDP_LevelPerfomanceRecorder_ACC>(pawn->AddComponentByClass(UDP_LevelPerfomanceRecorder_ACC::StaticClass(), false, FTransform::Identity, false));
-	PerfomanceRecorder->BeginPerfomanceRecording(LevelPerfomancePoints);
 }
 
-
-void ADP_PerfomanceFunctionalTest_QActor::Tick(float DeltaSeconds)
+void ADP_PerfomanceFunctionalTest_QActor::OnTestFinished(FPerfomanceTestLevelData _result)
 {
-	Super::Tick(DeltaSeconds);
+	check(GetWorld())
 
-	if(!IsRunning()) return;
-
-	if(!PerfomanceRecorder->IsRecording())
-	{
-		FinishTest(EFunctionalTestResult::Succeeded, "[PASSED] PerfomanceFunctionalTest: All perfomance points was iterated");
-	}
-}
-
-void ADP_PerfomanceFunctionalTest_QActor::FinishTest(EFunctionalTestResult TestResult, const FString& Message)
-{
-	if(PerfomanceRecorder)
-	{
-		FPerfomanceTestLevelData levelResult = PerfomanceRecorder->GetTestResult();
-
-		UWorld* world = GetWorld();
-		if(world)
-		{
-			Displacement::Test::WritePerfomanceTestData(UGameplayStatics::GetCurrentLevelName(GetWorld()), levelResult);
-		}
-	}
-				
-	UE_LOG(LogPerfomanceFunctionalTest, Log, TEXT("Perfomance test finished"));
-	
-	Super::FinishTest(TestResult, Message);
+	Displacement::Test::WritePerfomanceTestData(UGameplayStatics::GetCurrentLevelName(GetWorld()), _result);
+	FinishTest(EFunctionalTestResult::Succeeded, "[PASSED] PerfomanceFunctionalTest: All perfomance points was iterated");
 }

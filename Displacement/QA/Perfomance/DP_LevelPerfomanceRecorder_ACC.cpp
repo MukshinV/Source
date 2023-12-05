@@ -22,8 +22,8 @@ void UDP_LevelPerfomanceRecorder_ACC::PostInitProperties()
 
 void UDP_LevelPerfomanceRecorder_ACC::BeginPerfomanceRecording(const TArray<TObjectPtr<ADP_PerfomancePoint_Actor>>& _levelRegions)
 {
-	if(!GetWorld()) return;
-	if(!GetOwner()) return;
+	check(GetWorld())
+	check(GetOwner())
 
 	const FString levelName = UGameplayStatics::GetCurrentLevelName(GetWorld());
 	
@@ -32,91 +32,61 @@ void UDP_LevelPerfomanceRecorder_ACC::BeginPerfomanceRecording(const TArray<TObj
 		UE_LOG(LogPerfomanceRecorder, Log, TEXT("Level with name %s has no perfomance points"), *levelName)
 		return;
 	}
-	
-	LevelRegions = _levelRegions;
-	CurrentRegionIndex = -1;
 
 	LevelTestResult.LevelName = levelName;
-	LevelTestResult.RegionDatas.SetNum(LevelRegions.Num());
+	LevelTestResult.RegionDatas.SetNum(_levelRegions.Num());
+	
+	LevelPointsIterator.ResetPointer();
+	LevelPointsIterator.SetNewPointsArray(_levelRegions);
 
-	NextRegion();
+	MoveOwnerToNextRegion();
+	PointRecorder->StartRecordingRegion(LevelPointsIterator.GetPerfomancePoint());
 
 	UE_LOG(LogPerfomanceRecorder, Log, TEXT("Started recording"))
-	
-	bIsRecording = true;
 }
 
 void UDP_LevelPerfomanceRecorder_ACC::TickComponent(float _deltaTime, ELevelTick _tickType, FActorComponentTickFunction* _thisTickFunction)
 {
 	Super::TickComponent(_deltaTime, _tickType, _thisTickFunction);
 
-	if(!bIsRecording) return;
-
+	if(LevelPointsIterator.PassedAll()) return;
+	
 	if(PointRecorder->IsRegionRecording())
 	{
 		PointRecorder->UpdateTestMetrics(_deltaTime);
 		return;
 	}
 
-	LevelTestResult.RegionDatas[CurrentRegionIndex] = PointRecorder->CollectTestMetrics();
+	LevelTestResult.RegionDatas[LevelPointsIterator.CurrentRegionIndex] = PointRecorder->CollectTestMetrics();
 
-	if(!NextRegion())
+	if(LevelPointsIterator.Next())
 	{
-		EndPerfomanceRecording();
-	}
-}
+		MoveOwnerToNextRegion();
+		PointRecorder->StartRecordingRegion(LevelPointsIterator.GetPerfomancePoint());
 
-void UDP_LevelPerfomanceRecorder_ACC::EndPlay(const EEndPlayReason::Type _endPlayReason)
-{
-	if(bIsRecording)
-	{
-		EndPerfomanceRecording();	
+		return;
 	}
 	
-	Super::EndPlay(_endPlayReason);
+	EndPerfomanceRecording();
+
 }
 
 void UDP_LevelPerfomanceRecorder_ACC::EndPerfomanceRecording()
 {
-	bIsRecording = false;
+	LevelTestResult.AverageFPS = LevelTestResult.CalculateAverageFPS();
+	LevelTestResult.MaxFPSDelta = LevelTestResult.GetMaxFPSDelta();
 
-	float sumFps = 0.0f;
-	for(int32 i = 0; i < LevelTestResult.RegionDatas.Num(); ++i)
-	{
-		sumFps += LevelTestResult.RegionDatas[i].AverageFPS;
-	}
-
-	LevelTestResult.AverageFPS = sumFps / static_cast<float>(LevelTestResult.RegionDatas.Num());
-
-	float maxDelta = 0.0f;
-	for(int32 i = 0; i < LevelTestResult.RegionDatas.Num(); ++i)
-	{
-		maxDelta = FMath::Max(maxDelta, LevelTestResult.RegionDatas[i].MaxFPSDelta);
-	}
-	
-	LevelTestResult.MaxFPSDelta = maxDelta;
-	
 	UE_LOG(LogPerfomanceRecorder, Log, TEXT("Stopped recording"))
+
+	FinishedRecordingEvent.Broadcast(LevelTestResult);
 }
 
-bool UDP_LevelPerfomanceRecorder_ACC::NextRegion()
-{
-	if(CurrentRegionIndex == LevelRegions.Num() - 1) return false;
-
-	++CurrentRegionIndex;
-
-	MoveOwnerToNextRegion();
-	PointRecorder->StartRecordingRegion(LevelRegions[CurrentRegionIndex]);
-	
-	return true;
-}
-
-void UDP_LevelPerfomanceRecorder_ACC::MoveOwnerToNextRegion()
+void UDP_LevelPerfomanceRecorder_ACC::MoveOwnerToNextRegion() const
 {
 	AActor* owner = GetOwner();
 	check(owner)
 	
-	const ADP_PerfomancePoint_Actor* targetRegion = LevelRegions[CurrentRegionIndex];
+	const ADP_PerfomancePoint_Actor* targetRegion = LevelPointsIterator.GetPerfomancePoint();
 	const FVector targetLocation = targetRegion->GetActorLocation();
 	const FRotator targetRotation = targetRegion->GetActorRotation();
 

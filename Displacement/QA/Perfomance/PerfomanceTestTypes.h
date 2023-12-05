@@ -16,6 +16,13 @@ struct FPerfomanceTestRegionData
 	float AverageFPS{};
 	UPROPERTY()
 	float MaxFPSDelta{};
+
+	void Reset()
+	{
+		RegionName.Reset();
+		AverageFPS = 0.0f;
+		MaxFPSDelta = 0.0f;
+	}
 };
 
 USTRUCT()
@@ -31,6 +38,9 @@ struct FPerfomanceTestLevelData
 	float MaxFPSDelta{};
 	UPROPERTY()
 	TArray<FPerfomanceTestRegionData> RegionDatas{};
+
+	float CalculateAverageFPS() const;
+	float GetMaxFPSDelta() const;
 };
 
 

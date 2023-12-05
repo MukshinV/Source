@@ -5,29 +5,25 @@
 
 void UDP_PointPerfomanceRecorder::StartRecordingRegion(ADP_PerfomancePoint_Actor* _pointToRecord)
 {
-	if(!_pointToRecord) return;
-
-	RegionData = {};
+	check(_pointToRecord)
 	
-	TimePassed = 0.0f;
-	TickCounter = 0;
-
-	WaitDurationSeconds = _pointToRecord->GetWaitAmount();
+	RegionData.Reset();
+	Timer.Reset();
+	Timer.SetWaitDuration(_pointToRecord->GetWaitAmount());
+	
 	RegionData.RegionName = _pointToRecord->GetRegionName().ToString();
 }
 
 void UDP_PointPerfomanceRecorder::UpdateTestMetrics(float _deltaTime)
 {
-	TimePassed += _deltaTime;
-	
+	Timer.AddDeltaTime(_deltaTime);
 	RegionData.MaxFPSDelta = FMath::Max(_deltaTime, RegionData.MaxFPSDelta);
-
-	++TickCounter;
+	FPSCounter.AddTick();
 }
 
 FPerfomanceTestRegionData UDP_PointPerfomanceRecorder::CollectTestMetrics()
 {
-	const float averageFps = static_cast<float>(TickCounter) / WaitDurationSeconds;
+	const float averageFps = FPSCounter.GetAverageFPS(Timer.TimePassed);
 	RegionData.AverageFPS = averageFps;
 
 	return RegionData;
