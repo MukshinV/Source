@@ -1,7 +1,7 @@
 ﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 
-#include "QA/Perfomance/DP_PerfomanceRecorder_ACC.h"
+#include "QA/Perfomance/DP_LevelPerfomanceRecorder_ACC.h"
 
 #include "Kismet/GameplayStatics.h"
 #include "QA/Perfomance/PerfomanceTestTypes.h"
@@ -9,19 +9,18 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogPerfomanceRecorder, All, All)
 
-UDP_PerfomanceRecorder_ACC::UDP_PerfomanceRecorder_ACC()
+UDP_LevelPerfomanceRecorder_ACC::UDP_LevelPerfomanceRecorder_ACC()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	WaitDurationSeconds = 3.0f;
 }
 
-void UDP_PerfomanceRecorder_ACC::SetWaitDuration(float _newWaitingDuration)
+void UDP_LevelPerfomanceRecorder_ACC::PostInitProperties()
 {
-	_newWaitingDuration = FMath::Max(_newWaitingDuration, 0.0f);
-	WaitDurationSeconds = _newWaitingDuration;
+	Super::PostInitProperties();
+	PointRecorder = NewObject<UDP_PointPerfomanceRecorder>(this);
 }
 
-void UDP_PerfomanceRecorder_ACC::BeginPerfomanceRecording(const TArray<TObjectPtr<ADP_PerfomancePoint_Actor>>& _levelRegions)
+void UDP_LevelPerfomanceRecorder_ACC::BeginPerfomanceRecording(const TArray<TObjectPtr<ADP_PerfomancePoint_Actor>>& _levelRegions)
 {
 	if(!GetWorld()) return;
 	if(!GetOwner()) return;
@@ -47,20 +46,19 @@ void UDP_PerfomanceRecorder_ACC::BeginPerfomanceRecording(const TArray<TObjectPt
 	bIsRecording = true;
 }
 
-void UDP_PerfomanceRecorder_ACC::TickComponent(float _deltaTime, ELevelTick _tickType, FActorComponentTickFunction* _thisTickFunction)
+void UDP_LevelPerfomanceRecorder_ACC::TickComponent(float _deltaTime, ELevelTick _tickType, FActorComponentTickFunction* _thisTickFunction)
 {
 	Super::TickComponent(_deltaTime, _tickType, _thisTickFunction);
 
 	if(!bIsRecording) return;
 
-	if(TimePassed < WaitDurationSeconds)
+	if(PointRecorder->IsRegionRecording())
 	{
-		TimePassed += _deltaTime;
-		UpdateTestMetrics(_deltaTime);
+		PointRecorder->UpdateTestMetrics(_deltaTime);
 		return;
 	}
 
-	CollectTestMetrics();
+	LevelTestResult.RegionDatas[CurrentRegionIndex] = PointRecorder->CollectTestMetrics();
 
 	if(!NextRegion())
 	{
@@ -68,7 +66,7 @@ void UDP_PerfomanceRecorder_ACC::TickComponent(float _deltaTime, ELevelTick _tic
 	}
 }
 
-void UDP_PerfomanceRecorder_ACC::EndPlay(const EEndPlayReason::Type _endPlayReason)
+void UDP_LevelPerfomanceRecorder_ACC::EndPlay(const EEndPlayReason::Type _endPlayReason)
 {
 	if(bIsRecording)
 	{
@@ -78,7 +76,7 @@ void UDP_PerfomanceRecorder_ACC::EndPlay(const EEndPlayReason::Type _endPlayReas
 	Super::EndPlay(_endPlayReason);
 }
 
-void UDP_PerfomanceRecorder_ACC::EndPerfomanceRecording()
+void UDP_LevelPerfomanceRecorder_ACC::EndPerfomanceRecording()
 {
 	bIsRecording = false;
 
@@ -101,21 +99,19 @@ void UDP_PerfomanceRecorder_ACC::EndPerfomanceRecording()
 	UE_LOG(LogPerfomanceRecorder, Log, TEXT("Stopped recording"))
 }
 
-bool UDP_PerfomanceRecorder_ACC::NextRegion()
+bool UDP_LevelPerfomanceRecorder_ACC::NextRegion()
 {
 	if(CurrentRegionIndex == LevelRegions.Num() - 1) return false;
 
 	++CurrentRegionIndex;
-	TimePassed = 0.0f;
 
-	SetWaitDuration(LevelRegions[CurrentRegionIndex]->GetWaitAmount());
 	MoveOwnerToNextRegion();
-	LevelTestResult.RegionDatas[CurrentRegionIndex].RegionName = LevelRegions[CurrentRegionIndex]->GetRegionName().ToString();
+	PointRecorder->StartRecordingRegion(LevelRegions[CurrentRegionIndex]);
 	
 	return true;
 }
 
-void UDP_PerfomanceRecorder_ACC::MoveOwnerToNextRegion()
+void UDP_LevelPerfomanceRecorder_ACC::MoveOwnerToNextRegion()
 {
 	AActor* owner = GetOwner();
 	check(owner)
@@ -128,21 +124,4 @@ void UDP_PerfomanceRecorder_ACC::MoveOwnerToNextRegion()
 
 	owner->SetActorLocation(targetLocation);
 	owner->SetActorRotation(targetRotation);
-}
-
-void UDP_PerfomanceRecorder_ACC::UpdateTestMetrics(float _deltaTime)
-{
-	FPerfomanceTestRegionData& regionData = LevelTestResult.RegionDatas[CurrentRegionIndex];
-	regionData.MaxFPSDelta = FMath::Max(_deltaTime, regionData.MaxFPSDelta);
-
-	++TickCounter;
-}
-
-void UDP_PerfomanceRecorder_ACC::CollectTestMetrics()
-{
-	const float averageFps = static_cast<float>(TickCounter) / WaitDurationSeconds;
-
-	LevelTestResult.RegionDatas[CurrentRegionIndex].AverageFPS = averageFps;
-
-	TickCounter = 0;
 }

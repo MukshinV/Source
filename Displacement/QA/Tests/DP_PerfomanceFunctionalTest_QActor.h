@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "FunctionalTest.h"
 #include "GameFramework/Actor.h"
-#include "QA/Perfomance/DP_PerfomanceRecorder_ACC.h"
+#include "QA/Perfomance/DP_LevelPerfomanceRecorder_ACC.h"
 #include "QA/Perfomance/PerfomanceTestUtils.h"
 #include "DP_PerfomanceFunctionalTest_QActor.generated.h"
 
@@ -22,7 +22,7 @@ protected:
 	UPROPERTY()
 	TArray<TObjectPtr<ADP_PerfomancePoint_Actor>> LevelPerfomancePoints;
 	UPROPERTY()
-	TObjectPtr<UDP_PerfomanceRecorder_ACC> PerfomanceRecorder;
+	TObjectPtr<UDP_LevelPerfomanceRecorder_ACC> PerfomanceRecorder;
 	
 	virtual void PrepareTest() override;
 	virtual void Tick(float DeltaSeconds) override;

@@ -76,7 +76,7 @@ void ADP_PerfomanceFunctionalTest_QActor::SetupActors()
 		movementComponent->GravityScale = 0.0f;
 	}
 	
-	PerfomanceRecorder = Cast<UDP_PerfomanceRecorder_ACC>(pawn->AddComponentByClass(UDP_PerfomanceRecorder_ACC::StaticClass(), false, FTransform::Identity, false));
+	PerfomanceRecorder = Cast<UDP_LevelPerfomanceRecorder_ACC>(pawn->AddComponentByClass(UDP_LevelPerfomanceRecorder_ACC::StaticClass(), false, FTransform::Identity, false));
 	PerfomanceRecorder->BeginPerfomanceRecording(LevelPerfomancePoints);
 }
 
