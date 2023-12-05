@@ -17,13 +17,18 @@ class DISPLACEMENT_API ADP_PerfomanceFunctionalTest_QActor : public AFunctionalT
 public:
 	ADP_PerfomanceFunctionalTest_QActor();
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Setup")
+	TSubclassOf<APawn> TestPawnSubclass;
 	UPROPERTY()
 	TArray<TObjectPtr<ADP_PerfomancePoint_Actor>> LevelPerfomancePoints;
 	UPROPERTY()
 	TObjectPtr<UDP_PerfomanceRecorder_ACC> PerfomanceRecorder;
 	
 	virtual void PrepareTest() override;
-	virtual void StartTest() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void FinishTest(EFunctionalTestResult TestResult, const FString& Message) override;
+
+private:
+	void CollectPerfomanceTestPoints();
+	void SetupActors();
 };

@@ -12,19 +12,19 @@ DEFINE_LOG_CATEGORY_STATIC(LogPerfomanceRecorder, All, All)
 UDP_PerfomanceRecorder_ACC::UDP_PerfomanceRecorder_ACC()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	WaitDurationSeconds = 2.0f;
+	WaitDurationSeconds = 3.0f;
 }
 
 void UDP_PerfomanceRecorder_ACC::SetWaitDuration(float _newWaitingDuration)
 {
-	check(_newWaitingDuration >= 0.0f)
+	_newWaitingDuration = FMath::Max(_newWaitingDuration, 0.0f);
 	WaitDurationSeconds = _newWaitingDuration;
 }
 
 void UDP_PerfomanceRecorder_ACC::BeginPerfomanceRecording(const TArray<TObjectPtr<ADP_PerfomancePoint_Actor>>& _levelRegions)
 {
-	check(GetWorld());
-	check(GetOwner());
+	if(!GetWorld()) return;
+	if(!GetOwner()) return;
 
 	const FString levelName = UGameplayStatics::GetCurrentLevelName(GetWorld());
 	
@@ -56,7 +56,7 @@ void UDP_PerfomanceRecorder_ACC::TickComponent(float _deltaTime, ELevelTick _tic
 	if(TimePassed < WaitDurationSeconds)
 	{
 		TimePassed += _deltaTime;
-		UpdateTestMetrics();
+		UpdateTestMetrics(_deltaTime);
 		return;
 	}
 
@@ -90,15 +90,27 @@ void UDP_PerfomanceRecorder_ACC::EndPerfomanceRecording()
 
 	LevelTestResult.AverageFPS = sumFps / static_cast<float>(LevelTestResult.RegionDatas.Num());
 
+	float maxDelta = 0.0f;
+	for(int32 i = 0; i < LevelTestResult.RegionDatas.Num(); ++i)
+	{
+		maxDelta = FMath::Max(maxDelta, LevelTestResult.RegionDatas[i].MaxFPSDelta);
+	}
+	
+	LevelTestResult.MaxFPSDelta = maxDelta;
+	
 	UE_LOG(LogPerfomanceRecorder, Log, TEXT("Stopped recording"))
 }
 
 bool UDP_PerfomanceRecorder_ACC::NextRegion()
 {
-	if(CurrentRegionIndex == LevelRegions.Num()) return false;
+	if(CurrentRegionIndex == LevelRegions.Num() - 1) return false;
 
 	++CurrentRegionIndex;
 	TimePassed = 0.0f;
+
+	SetWaitDuration(LevelRegions[CurrentRegionIndex]->GetWaitAmount());
+	MoveOwnerToNextRegion();
+	LevelTestResult.RegionDatas[CurrentRegionIndex].RegionName = LevelRegions[CurrentRegionIndex]->GetRegionName().ToString();
 	
 	return true;
 }
@@ -110,14 +122,19 @@ void UDP_PerfomanceRecorder_ACC::MoveOwnerToNextRegion()
 	
 	const ADP_PerfomancePoint_Actor* targetRegion = LevelRegions[CurrentRegionIndex];
 	const FVector targetLocation = targetRegion->GetActorLocation();
+	const FRotator targetRotation = targetRegion->GetActorRotation();
 
 	//@TODO: add smooth transition
 
 	owner->SetActorLocation(targetLocation);
+	owner->SetActorRotation(targetRotation);
 }
 
-void UDP_PerfomanceRecorder_ACC::UpdateTestMetrics()
+void UDP_PerfomanceRecorder_ACC::UpdateTestMetrics(float _deltaTime)
 {
+	FPerfomanceTestRegionData& regionData = LevelTestResult.RegionDatas[CurrentRegionIndex];
+	regionData.MaxFPSDelta = FMath::Max(_deltaTime, regionData.MaxFPSDelta);
+
 	++TickCounter;
 }
 
@@ -126,6 +143,6 @@ void UDP_PerfomanceRecorder_ACC::CollectTestMetrics()
 	const float averageFps = static_cast<float>(TickCounter) / WaitDurationSeconds;
 
 	LevelTestResult.RegionDatas[CurrentRegionIndex].AverageFPS = averageFps;
-	
+
 	TickCounter = 0;
 }

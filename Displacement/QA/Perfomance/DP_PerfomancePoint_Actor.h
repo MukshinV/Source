@@ -14,8 +14,12 @@ class DISPLACEMENT_API ADP_PerfomancePoint_Actor : public AActor
 public:
 	ADP_PerfomancePoint_Actor();
 	FName GetRegionName() const { return RegionName; }
+	float GetWaitAmount() const { return WaitAmountSeconds; }
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Point Data")
 	FName RegionName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Point Data")
+	float WaitAmountSeconds;
+
 };

@@ -5,6 +5,8 @@ ADP_PerfomancePoint_Actor::ADP_PerfomancePoint_Actor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Test Point"));
+
+	WaitAmountSeconds = 2.0f;
 }
 
 

@@ -15,7 +15,6 @@ class DISPLACEMENT_API UDP_PerfomanceRecorder_ACC : public UActorComponent
 
 public:
 	UDP_PerfomanceRecorder_ACC();
-	void SetWaitDuration(float _newWaitingDuration);
 	bool IsRecording() const { return bIsRecording; }
 
 	void BeginPerfomanceRecording(const TArray<TObjectPtr<ADP_PerfomancePoint_Actor>>& _levelRegions);
@@ -23,7 +22,8 @@ public:
 
 protected:
 	void EndPerfomanceRecording();
-	
+	void SetWaitDuration(float _newWaitingDuration);
+
 	virtual void TickComponent(float _deltaTime, ELevelTick _tickType, FActorComponentTickFunction* _thisTickFunction) override;
 	virtual void EndPlay(const EEndPlayReason::Type _endPlayReason) override;
 
@@ -42,6 +42,6 @@ private:
 
 	bool NextRegion();
 	void MoveOwnerToNextRegion();
-	void UpdateTestMetrics();
+	void UpdateTestMetrics(float _deltaTime);
 	void CollectTestMetrics();
 };
