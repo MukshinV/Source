@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "FunctionalTest.h"
 #include "GameFramework/Actor.h"
-#include "QA/Perfomance/DP_PerfomanceRecorder_ACC.h"
+#include "QA/Perfomance/DP_LevelPerfomanceRecorder_ACC.h"
 #include "QA/Perfomance/PerfomanceTestUtils.h"
 #include "DP_PerfomanceFunctionalTest_QActor.generated.h"
 
@@ -14,16 +14,19 @@ class DISPLACEMENT_API ADP_PerfomanceFunctionalTest_QActor : public AFunctionalT
 {
 	GENERATED_BODY()
 
+	using PerfPointsArray_T = TArray<TObjectPtr<ADP_PerfomancePoint_Actor>>;
 public:
 	ADP_PerfomanceFunctionalTest_QActor();
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Setup")
+	TSubclassOf<APawn> TestPawnSubclass;
 	UPROPERTY()
-	TArray<TObjectPtr<ADP_PerfomancePoint_Actor>> LevelPerfomancePoints;
-	UPROPERTY()
-	TObjectPtr<UDP_PerfomanceRecorder_ACC> PerfomanceRecorder;
+	TObjectPtr<UDP_LevelPerfomanceRecorder_ACC> PerfomanceRecorder;
 	
 	virtual void PrepareTest() override;
-	virtual void StartTest() override;
-	virtual void Tick(float DeltaSeconds) override;
-	virtual void FinishTest(EFunctionalTestResult TestResult, const FString& Message) override;
+
+	void OnTestFinished(FPerfomanceTestLevelData _result);
+private:
+	void CollectPerfomanceTestPoints(PerfPointsArray_T& _perfomancePoints) const;
+	void SetupActors(PerfPointsArray_T& _perfomancePoints);
 };

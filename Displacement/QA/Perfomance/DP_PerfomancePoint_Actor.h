@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "DP_PerfomancePoint_Actor.generated.h"
 
 UCLASS()
@@ -13,9 +14,12 @@ class DISPLACEMENT_API ADP_PerfomancePoint_Actor : public AActor
 
 public:
 	ADP_PerfomancePoint_Actor();
-	FName GetRegionName() const { return RegionName; }
+	
+	FName GetRegionName() const { return FName{GetActorNameOrLabel()}; }
+	float GetWaitAmount() const { return WaitAmountSeconds; }
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Point Data")
-	FName RegionName;
+	float WaitAmountSeconds;
+
 };

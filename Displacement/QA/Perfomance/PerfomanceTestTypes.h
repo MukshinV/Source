@@ -11,11 +11,18 @@ struct FPerfomanceTestRegionData
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FString RegionName;
+	FString RegionName{};
 	UPROPERTY()
-	float AverageFPS;
+	float AverageFPS{};
 	UPROPERTY()
-	float MaxFPSDelta;
+	float MaxFPSDelta{};
+
+	void Reset()
+	{
+		RegionName.Reset();
+		AverageFPS = 0.0f;
+		MaxFPSDelta = 0.0f;
+	}
 };
 
 USTRUCT()
@@ -24,21 +31,16 @@ struct FPerfomanceTestLevelData
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FString LevelName;
+	FString LevelName{};
 	UPROPERTY()
-	float AverageFPS;
+	float AverageFPS{};
 	UPROPERTY()
-	float MaxFPSDelta;
+	float MaxFPSDelta{};
 	UPROPERTY()
-	TArray<FPerfomanceTestRegionData> RegionDatas;
+	TArray<FPerfomanceTestRegionData> RegionDatas{};
+
+	float CalculateAverageFPS() const;
+	float GetMaxFPSDelta() const;
 };
 
-USTRUCT()
-struct FPerfomanceTestData
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TArray<FPerfomanceTestLevelData> LevelDatas;
-};
 
