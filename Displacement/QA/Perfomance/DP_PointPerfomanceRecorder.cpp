@@ -8,6 +8,7 @@ void UDP_PointPerfomanceRecorder::StartRecordingRegion(ADP_PerfomancePoint_Actor
 	check(_pointToRecord)
 	
 	RegionData.Reset();
+	FPSCounter.Reset();
 	Timer.Reset();
 	Timer.SetWaitDuration(_pointToRecord->GetWaitAmount());
 	
