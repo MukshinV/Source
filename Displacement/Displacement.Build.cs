@@ -9,13 +9,8 @@ public class Displacement : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
-		PrivateDependencyModuleNames.AddRange(new string[] { "Json", "JsonUtilities" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Json", "JsonUtilities", "FunctionalTesting" });
 
 		PrivateIncludePaths.AddRange(new string[] { ModuleDirectory });
-		
-		if (Target.Configuration != UnrealTargetConfiguration.Shipping)
-		{
-			PrivateDependencyModuleNames.AddRange(new string[] { "FunctionalTesting" });
-		}
 	}
 }
