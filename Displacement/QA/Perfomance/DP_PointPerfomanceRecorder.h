@@ -17,7 +17,7 @@ public:
 	void EnterRecordingPoint(ADP_PerfomancePoint_Actor* _pointToRecord);
 	void ExitRecordingPoint();
 	bool IsRegionRecording() const;
-	bool CanMoveToNextPoint() const;
+	bool CanMoveToNextStage() const;
 	void UpdateTestMetrics(float _deltaTime);
 	FPerfomanceTestRegionData CollectTestMetrics();
 	void MoveToNextPointStage();

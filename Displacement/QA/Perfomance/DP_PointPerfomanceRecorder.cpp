@@ -10,11 +10,12 @@ void UDP_PointPerfomanceRecorder::EnterRecordingPoint(ADP_PerfomancePoint_Actor*
 	RegionData.Reset();
 	FPSCounter.Reset();
 	
-	RegionData.RegionName = _pointToRecord->GetRegionName().ToString();
 	CurrentPoint = _pointToRecord;
 
 	CurrentPoint->OnRecorderEntered();
 	CurrentPoint->OnStartedStageRecording();
+
+	RegionData.RegionName = _pointToRecord->GetRegionName().ToString();
 }
 
 void UDP_PointPerfomanceRecorder::ExitRecordingPoint()
@@ -31,11 +32,11 @@ bool UDP_PointPerfomanceRecorder::IsRegionRecording() const
 	return CurrentPoint->IsRecording();
 }
 
-bool UDP_PointPerfomanceRecorder::CanMoveToNextPoint() const
+bool UDP_PointPerfomanceRecorder::CanMoveToNextStage() const
 {
-	if(!CurrentPoint) return true;
+	if(!CurrentPoint) return false;
 
-	return CurrentPoint->CanMoveToNextPoint();
+	return CurrentPoint->CanMoveToNextStage();
 }
 
 void UDP_PointPerfomanceRecorder::MoveToNextPointStage()

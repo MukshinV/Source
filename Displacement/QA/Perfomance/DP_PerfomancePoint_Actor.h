@@ -21,9 +21,10 @@ public:
 
 	virtual void MoveToNextStage() {}
 	
-	virtual bool IsRecording() const { return !Timer.IsTimeUp(); }
+	virtual bool IsRecording() const { return Timer.IsRunning(); }
 	virtual bool CanMoveToNextPoint() const { return !IsRecording(); }
-
+	virtual bool CanMoveToNextStage() const { return false; }
+	
 	virtual void OnRecorderEntered() {}
 	virtual void OnStartedStageRecording();
 	virtual void OnRecorderExit() {}
@@ -33,6 +34,7 @@ protected:
 	float WaitAmountSeconds;
 
 	virtual void Tick(float _deltaSeconds) override;
+	virtual void OnFinishedStageRecording() {}
 private:
 	struct Timer
 	{
@@ -40,7 +42,7 @@ private:
 		float WaitDurationSeconds;
 
 		void AddDeltaTime(float _deltaTime) { TimePassed += _deltaTime;}
-		bool IsTimeUp() const { return TimePassed >= WaitDurationSeconds; }
+		bool IsRunning() const { return TimePassed < WaitDurationSeconds; }
 		void Reset() { TimePassed = 0.0f; WaitDurationSeconds = 0.0f; }
 		void SetWaitDuration(float _waitDuration) { WaitDurationSeconds = _waitDuration; }
 	} Timer;

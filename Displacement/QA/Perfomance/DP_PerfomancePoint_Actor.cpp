@@ -23,6 +23,11 @@ void ADP_PerfomancePoint_Actor::Tick(float _deltaSeconds)
 	if(!IsRecording()) return;
 	
 	Timer.AddDeltaTime(_deltaSeconds);
+
+	if(!IsRecording())
+	{
+		OnFinishedStageRecording();
+	}
 }
 
 

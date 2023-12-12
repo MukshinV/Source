@@ -49,15 +49,8 @@ void UDP_LevelPerfomanceRecorder_ACC::CollectPointRecordingResults()
 	LevelTestResult.RegionDatas.Add(PointRecorder->CollectTestMetrics());
 }
 
-bool UDP_LevelPerfomanceRecorder_ACC::CanSwitchToNextPoint()
-{
-	return PointRecorder->CanMoveToNextPoint();
-}
-
 bool UDP_LevelPerfomanceRecorder_ACC::TryToSwitchToNextPoint()
 {
-	if(!PointRecorder->CanMoveToNextPoint()) return false;
-
 	PointRecorder->ExitRecordingPoint();
 	
 	if(LevelPointsIterator.Next())
@@ -84,7 +77,7 @@ void UDP_LevelPerfomanceRecorder_ACC::TickComponent(float _deltaTime, ELevelTick
 
 	CollectPointRecordingResults();
 
-	if(!CanSwitchToNextPoint())
+	if(PointRecorder->CanMoveToNextStage())
 	{
 		PointRecorder->MoveToNextPointStage();
 		return;

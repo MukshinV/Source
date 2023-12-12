@@ -54,6 +54,5 @@ private:
 
 	void MoveOwnerToNextRegion() const;
 	void CollectPointRecordingResults();
-	bool CanSwitchToNextPoint();
 	bool TryToSwitchToNextPoint();
 };
