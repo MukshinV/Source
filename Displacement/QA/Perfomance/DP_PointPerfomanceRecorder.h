@@ -14,10 +14,13 @@ class DISPLACEMENT_API UDP_PointPerfomanceRecorder : public UObject
 {
 	GENERATED_BODY()
 public:
-	void StartRecordingRegion(ADP_PerfomancePoint_Actor* _pointToRecord);
-	bool IsRegionRecording() const { return Timer.IsTimeUp(); }
+	void EnterRecordingPoint(ADP_PerfomancePoint_Actor* _pointToRecord);
+	void ExitRecordingPoint();
+	bool IsRegionRecording() const;
+	bool CanMoveToNextPoint() const;
 	void UpdateTestMetrics(float _deltaTime);
 	FPerfomanceTestRegionData CollectTestMetrics();
+	void MoveToNextPointStage();
 private:
 	UPROPERTY()
 	TObjectPtr<ADP_PerfomancePoint_Actor> CurrentPoint;
@@ -31,16 +34,4 @@ private:
 		void Reset() { TickCounter = 0; }
 		void AddTick() { ++TickCounter; }
 	} FPSCounter;
-
-	struct Timer
-	{
-		float TimePassed;
-		float WaitDurationSeconds;
-
-		void AddDeltaTime(float _deltaTime) { TimePassed += _deltaTime;}
-		bool IsTimeUp() const { return TimePassed < WaitDurationSeconds; }
-		void Reset() { TimePassed = 0.0f; WaitDurationSeconds = 0.0f; }
-		void SetWaitDuration(float _waitDuration) { WaitDurationSeconds = _waitDuration; }
-	} Timer;
-
 };

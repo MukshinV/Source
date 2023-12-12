@@ -34,15 +34,40 @@ void UDP_LevelPerfomanceRecorder_ACC::BeginPerfomanceRecording(const TArray<TObj
 	}
 
 	LevelTestResult.LevelName = levelName;
-	LevelTestResult.RegionDatas.SetNum(_levelRegions.Num());
 	
 	LevelPointsIterator.ResetPointer();
 	LevelPointsIterator.SetNewPointsArray(_levelRegions);
 
 	MoveOwnerToNextRegion();
-	PointRecorder->StartRecordingRegion(LevelPointsIterator.GetPerfomancePoint());
+	PointRecorder->EnterRecordingPoint(LevelPointsIterator.GetPerfomancePoint());
 
 	UE_LOG(LogPerfomanceRecorder, Log, TEXT("Started recording"))
+}
+
+void UDP_LevelPerfomanceRecorder_ACC::CollectPointRecordingResults()
+{
+	LevelTestResult.RegionDatas.Add(PointRecorder->CollectTestMetrics());
+}
+
+bool UDP_LevelPerfomanceRecorder_ACC::CanSwitchToNextPoint()
+{
+	return PointRecorder->CanMoveToNextPoint();
+}
+
+bool UDP_LevelPerfomanceRecorder_ACC::TryToSwitchToNextPoint()
+{
+	if(!PointRecorder->CanMoveToNextPoint()) return false;
+
+	PointRecorder->ExitRecordingPoint();
+	
+	if(LevelPointsIterator.Next())
+	{
+		MoveOwnerToNextRegion();
+		PointRecorder->EnterRecordingPoint(LevelPointsIterator.GetPerfomancePoint());
+		return true;
+	}
+
+	 return false;
 }
 
 void UDP_LevelPerfomanceRecorder_ACC::TickComponent(float _deltaTime, ELevelTick _tickType, FActorComponentTickFunction* _thisTickFunction)
@@ -57,18 +82,17 @@ void UDP_LevelPerfomanceRecorder_ACC::TickComponent(float _deltaTime, ELevelTick
 		return;
 	}
 
-	LevelTestResult.RegionDatas[LevelPointsIterator.CurrentRegionIndex] = PointRecorder->CollectTestMetrics();
+	CollectPointRecordingResults();
 
-	if(LevelPointsIterator.Next())
+	if(!CanSwitchToNextPoint())
 	{
-		MoveOwnerToNextRegion();
-		PointRecorder->StartRecordingRegion(LevelPointsIterator.GetPerfomancePoint());
-
+		PointRecorder->MoveToNextPointStage();
 		return;
 	}
 	
+	if(TryToSwitchToNextPoint()) return;
+	
 	EndPerfomanceRecording();
-
 }
 
 void UDP_LevelPerfomanceRecorder_ACC::EndPerfomanceRecording()
