@@ -22,9 +22,9 @@ protected:
 	TSubclassOf<APawn> TestPawnSubclass;
 	UPROPERTY()
 	TObjectPtr<UDP_LevelPerfomanceRecorder_ACC> PerfomanceRecorder;
-	
-	virtual void PrepareTest() override;
 
+	virtual void StartTest() override;
+		
 	void OnTestFinished(FPerfomanceTestLevelData _result);
 private:
 	void CollectPerfomanceTestPoints(PerfPointsArray_T& _perfomancePoints) const;

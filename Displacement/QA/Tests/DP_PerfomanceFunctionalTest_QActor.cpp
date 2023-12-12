@@ -16,9 +16,9 @@ ADP_PerfomanceFunctionalTest_QActor::ADP_PerfomanceFunctionalTest_QActor()
 	TimeLimit = 0.0f;
 }
 
-void ADP_PerfomanceFunctionalTest_QActor::PrepareTest()
+void ADP_PerfomanceFunctionalTest_QActor::StartTest()
 {
-	Super::PrepareTest();
+	Super::StartTest();
 
 	TArray<TObjectPtr<ADP_PerfomancePoint_Actor>> levelPerfomancePoints{};
 	
