@@ -90,9 +90,8 @@ void UDP_LevelPerfomanceRecorder_ACC::TickComponent(float _deltaTime, ELevelTick
 
 void UDP_LevelPerfomanceRecorder_ACC::EndPerfomanceRecording()
 {
-	LevelTestResult.AverageFPS = LevelTestResult.CalculateAverageFPS();
-	LevelTestResult.MaxFPSDelta = LevelTestResult.GetMaxFPSDelta();
-
+	LevelTestResult.PerfomanceTestDate = FDateTime::Now().ToString();
+	
 	UE_LOG(LogPerfomanceRecorder, Log, TEXT("Stopped recording"))
 
 	FinishedRecordingEvent.Broadcast(LevelTestResult);
