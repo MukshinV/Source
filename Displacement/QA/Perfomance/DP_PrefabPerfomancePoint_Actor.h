@@ -42,15 +42,15 @@ protected:
 	
 	struct PrefabIterator
 	{
-		int32 CurrentPointer;
+		uint32 CurrentPointer;
 		TArray<FName> RowNames;
 		
-		void Setup(const UDataTable* _table) { CurrentPointer = 0; RowNames = _table->GetRowNames(); }
+		void Setup(const UDataTable* _table) { CurrentPointer = 0u; RowNames = _table->GetRowNames(); }
 		void Next() { ++CurrentPointer; }
-		bool IsPassedAll() const { return CurrentPointer >= RowNames.Num(); }
-		bool IsLast() const { return CurrentPointer >= RowNames.Num() - 1; }
+		bool IsPassedAll() const { return CurrentPointer >= static_cast<uint32>(RowNames.Num()); }
+		bool IsLast() const { return CurrentPointer >= static_cast<uint32>(RowNames.Num() - 1); }
 		FName GetCurrentRow() const;
-		TestPrefabUnit_F* GetPrefab(UDataTable* _table) const;
+		TestPrefabUnit_F* GetPrefab(const UDataTable* _table) const;
 	} PrefabIterator;
 
 	virtual void OnFinishedStageRecording() override;

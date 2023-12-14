@@ -18,13 +18,13 @@ struct FLevelPointsIterator
 	
 	UPROPERTY()
 	TArray<TObjectPtr<ADP_PerfomancePoint_Actor>> LevelPoints;
-	int32 CurrentRegionIndex;
+	uint32 CurrentRegionIndex;
 
 	bool PassedAll() const { return CurrentRegionIndex == LevelPoints.Num();}
-	bool Next() { return ++CurrentRegionIndex < LevelPoints.Num();}
-	ADP_PerfomancePoint_Actor* GetPerfomancePoint() const { return LevelPoints[CurrentRegionIndex]; }
+	ADP_PerfomancePoint_Actor* GetCurrent() const { return CurrentRegionIndex >= static_cast<uint32>(LevelPoints.Num()) ? nullptr : LevelPoints[CurrentRegionIndex]; }
+	ADP_PerfomancePoint_Actor* Next() { ++CurrentRegionIndex; return GetCurrent(); }
 	void SetNewPointsArray(const PerfPointsArray_T& _newArray) { LevelPoints = _newArray;}
-	void ResetPointer() { CurrentRegionIndex = 0; }
+	void ResetPointer() { CurrentRegionIndex = 0u; }
 };
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))

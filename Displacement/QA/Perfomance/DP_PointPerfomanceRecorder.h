@@ -14,10 +14,13 @@ class DISPLACEMENT_API UDP_PointPerfomanceRecorder : public UObject
 {
 	GENERATED_BODY()
 public:
-	void EnterRecordingPoint(ADP_PerfomancePoint_Actor* _pointToRecord);
-	void ExitRecordingPoint();
 	bool IsRegionRecording() const;
 	bool CanMoveToNextStage() const;
+	
+	void SetRecordingPoint(ADP_PerfomancePoint_Actor* _pointToRecord);
+	void EnterRecordingPoint();
+	void ExitRecordingPoint();
+
 	void UpdateTestMetrics(float _deltaTime);
 	FPerfomanceTestRegionData CollectTestMetrics();
 	void MoveToNextPointStage();
@@ -28,10 +31,10 @@ private:
 
 	struct FPSCounter
 	{
-		int32 TickCounter;
+		uint32 TickCounter;
 
 		float GetAverageFPS(float _timePassed) const { return static_cast<float>(TickCounter) / _timePassed; }
-		void Reset() { TickCounter = 0; }
+		void Reset() { TickCounter = 0u; }
 		void AddTick() { ++TickCounter; }
 	} FPSCounter;
 };

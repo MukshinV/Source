@@ -44,8 +44,6 @@ void ADP_PrefabPerfomancePoint_Actor::OnStartedStageRecording()
 	Super::OnStartedStageRecording();
 
 	const UWorld* world = GetWorld();
-	check(world)
-
 	const TestPrefabUnit_F* unit = PrefabIterator.GetPrefab(PrefabTable);
 	check(unit)
 
@@ -54,23 +52,21 @@ void ADP_PrefabPerfomancePoint_Actor::OnStartedStageRecording()
 	CurrentPrefabActor = UPrefabricatorBlueprintLibrary::SpawnPrefab(world, unit->PrefabUnit, spawnTransform, 0);
 }
 
-inline void ADP_PrefabPerfomancePoint_Actor::OnFinishedStageRecording()
+void ADP_PrefabPerfomancePoint_Actor::OnFinishedStageRecording()
 {
 	CurrentPrefabActor->Destroy();
+
+	Super::OnFinishedStageRecording();
 }
 
 FName ADP_PrefabPerfomancePoint_Actor::PrefabIterator::GetCurrentRow() const
 {
-	if(IsPassedAll()) return FName{};
-
-	return RowNames[CurrentPointer];
+	return CurrentPointer >= static_cast<uint32>(RowNames.Num()) ? FName{} : RowNames[CurrentPointer];
 }
 
-TestPrefabUnit_F* ADP_PrefabPerfomancePoint_Actor::PrefabIterator::GetPrefab(UDataTable* _targetTable) const
+TestPrefabUnit_F* ADP_PrefabPerfomancePoint_Actor::PrefabIterator::GetPrefab(const UDataTable* _targetTable) const
 {
-	if(IsPassedAll()) return nullptr;
-
-	const FName targetRow = RowNames[CurrentPointer];
+	const FName targetRow = GetCurrentRow();
 	return _targetTable->FindRow<FDP_PerfomanceTestPrefabUnit_QStruct>(targetRow, "");
 }
 

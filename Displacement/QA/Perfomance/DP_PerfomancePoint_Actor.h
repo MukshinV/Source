@@ -3,17 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DP_PerfomancePointInterface.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "DP_PerfomancePoint_Actor.generated.h"
 
 UCLASS()
-class DISPLACEMENT_API ADP_PerfomancePoint_Actor : public AActor
+class DISPLACEMENT_API ADP_PerfomancePoint_Actor : public AActor, public IDP_PerfomancePointInterface
 {
 	GENERATED_BODY()
 
 public:
 	ADP_PerfomancePoint_Actor();
+	virtual void BeginPlay() override;
 	
 	virtual FName GetRegionName() const { return FName{GetActorNameOrLabel()}; }
 	float GetWaitAmount() const { return WaitAmountSeconds; }
@@ -22,19 +24,19 @@ public:
 	virtual void MoveToNextStage() {}
 	
 	virtual bool IsRecording() const { return Timer.IsRunning(); }
-	virtual bool CanMoveToNextPoint() const { return !IsRecording(); }
-	virtual bool CanMoveToNextStage() const { return false; }
+	virtual bool CanMoveToNextPoint() const override { return !IsRecording(); }
+	virtual bool CanMoveToNextStage() const override { return false; }
 	
-	virtual void OnRecorderEntered() {}
-	virtual void OnStartedStageRecording();
-	virtual void OnRecorderExit() {}
+	virtual void OnRecorderEntered()  override {}
+	virtual void OnStartedStageRecording() override;
+	virtual void OnRecorderExit() override {}
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Point Data")
 	float WaitAmountSeconds;
 
 	virtual void Tick(float _deltaSeconds) override;
-	virtual void OnFinishedStageRecording() {}
+	virtual void OnFinishedStageRecording() override;
 private:
 	struct Timer
 	{
