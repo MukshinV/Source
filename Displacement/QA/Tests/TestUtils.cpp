@@ -1,5 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
+﻿#if WITH_AUTOMATION_TESTS
 
 #include "QA/Tests/TestUtils.h"
 
@@ -23,3 +22,5 @@ namespace Displacement
 		}
 	}
 }
+
+#endif
