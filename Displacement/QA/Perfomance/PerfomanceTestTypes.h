@@ -33,14 +33,9 @@ struct FPerfomanceTestLevelData
 	UPROPERTY()
 	FString LevelName{};
 	UPROPERTY()
-	float AverageFPS{};
-	UPROPERTY()
-	float MaxFPSDelta{};
+	FString PerfomanceTestDate{};
 	UPROPERTY()
 	TArray<FPerfomanceTestRegionData> RegionDatas{};
-
-	float CalculateAverageFPS() const;
-	float GetMaxFPSDelta() const;
 };
 
 

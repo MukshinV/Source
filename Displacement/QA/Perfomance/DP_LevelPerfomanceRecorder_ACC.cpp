@@ -34,15 +34,35 @@ void UDP_LevelPerfomanceRecorder_ACC::BeginPerfomanceRecording(const TArray<TObj
 	}
 
 	LevelTestResult.LevelName = levelName;
-	LevelTestResult.RegionDatas.SetNum(_levelRegions.Num());
 	
 	LevelPointsIterator.ResetPointer();
 	LevelPointsIterator.SetNewPointsArray(_levelRegions);
 
 	MoveOwnerToNextRegion();
-	PointRecorder->StartRecordingRegion(LevelPointsIterator.GetPerfomancePoint());
+	ADP_PerfomancePoint_Actor* point = LevelPointsIterator.GetCurrent();
+	PointRecorder->SetRecordingPoint(point);
+	PointRecorder->EnterRecordingPoint();
 
 	UE_LOG(LogPerfomanceRecorder, Log, TEXT("Started recording"))
+}
+
+void UDP_LevelPerfomanceRecorder_ACC::CollectPointRecordingResults()
+{
+	LevelTestResult.RegionDatas.Add(PointRecorder->CollectTestMetrics());
+}
+
+bool UDP_LevelPerfomanceRecorder_ACC::TryToSwitchToNextPoint()
+{
+	PointRecorder->ExitRecordingPoint();
+	
+	if(!LevelPointsIterator.Next()) return false;
+
+	MoveOwnerToNextRegion();
+	ADP_PerfomancePoint_Actor* point = LevelPointsIterator.GetCurrent();
+	PointRecorder->SetRecordingPoint(point);
+	PointRecorder->EnterRecordingPoint();
+	
+	return true;
 }
 
 void UDP_LevelPerfomanceRecorder_ACC::TickComponent(float _deltaTime, ELevelTick _tickType, FActorComponentTickFunction* _thisTickFunction)
@@ -57,25 +77,23 @@ void UDP_LevelPerfomanceRecorder_ACC::TickComponent(float _deltaTime, ELevelTick
 		return;
 	}
 
-	LevelTestResult.RegionDatas[LevelPointsIterator.CurrentRegionIndex] = PointRecorder->CollectTestMetrics();
+	CollectPointRecordingResults();
 
-	if(LevelPointsIterator.Next())
+	if(PointRecorder->CanMoveToNextStage())
 	{
-		MoveOwnerToNextRegion();
-		PointRecorder->StartRecordingRegion(LevelPointsIterator.GetPerfomancePoint());
-
+		PointRecorder->MoveToNextPointStage();
 		return;
 	}
 	
+	if(TryToSwitchToNextPoint()) return;
+	
 	EndPerfomanceRecording();
-
 }
 
 void UDP_LevelPerfomanceRecorder_ACC::EndPerfomanceRecording()
 {
-	LevelTestResult.AverageFPS = LevelTestResult.CalculateAverageFPS();
-	LevelTestResult.MaxFPSDelta = LevelTestResult.GetMaxFPSDelta();
-
+	LevelTestResult.PerfomanceTestDate = FDateTime::Now().ToString();
+	
 	UE_LOG(LogPerfomanceRecorder, Log, TEXT("Stopped recording"))
 
 	FinishedRecordingEvent.Broadcast(LevelTestResult);
@@ -86,9 +104,9 @@ void UDP_LevelPerfomanceRecorder_ACC::MoveOwnerToNextRegion() const
 	AActor* owner = GetOwner();
 	check(owner)
 	
-	const ADP_PerfomancePoint_Actor* targetRegion = LevelPointsIterator.GetPerfomancePoint();
-	const FVector targetLocation = targetRegion->GetActorLocation();
-	const FRotator targetRotation = targetRegion->GetActorRotation();
+	const ADP_PerfomancePoint_Actor* targetPoint = LevelPointsIterator.GetCurrent();
+	const FVector targetLocation = targetPoint->GetActorLocation();
+	const FRotator targetRotation = targetPoint->GetActorRotation();
 
 	//@TODO: add smooth transition
 
