@@ -3,11 +3,17 @@
 
 #include "QA/Perfomance/DP_LevelPerfomanceRecorder_ACC.h"
 
+#include "DP_PerfomancePointCollection_Actor.h"
 #include "Kismet/GameplayStatics.h"
 #include "QA/Perfomance/PerfomanceTestTypes.h"
-#include "QA/Perfomance/PerfomanceTestUtils.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogPerfomanceRecorder, All, All)
+
+ADP_PerfomancePoint_Actor* FLevelPointsIterator::GetCurrent() const
+{
+	// Возвращаю только точку, пока не плавного перехода
+	return CurrentRegionIndex >= static_cast<uint32>(LevelPoints.Num()) ? nullptr : LevelPoints[CurrentRegionIndex].Point;
+}
 
 UDP_LevelPerfomanceRecorder_ACC::UDP_LevelPerfomanceRecorder_ACC()
 {
@@ -20,7 +26,7 @@ void UDP_LevelPerfomanceRecorder_ACC::PostInitProperties()
 	PointRecorder = NewObject<UDP_PointPerfomanceRecorder>(this);
 }
 
-void UDP_LevelPerfomanceRecorder_ACC::BeginPerfomanceRecording(const TArray<TObjectPtr<ADP_PerfomancePoint_Actor>>& _levelRegions)
+void UDP_LevelPerfomanceRecorder_ACC::BeginPerfomanceRecording(const TArray<FPerfomancePointData>& _levelRegions)
 {
 	check(GetWorld())
 	check(GetOwner())

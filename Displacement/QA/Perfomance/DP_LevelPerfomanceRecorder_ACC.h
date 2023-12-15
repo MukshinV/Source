@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DP_PerfomancePointCollection_Actor.h"
 #include "DP_PointPerfomanceRecorder.h"
 #include "Components/ActorComponent.h"
 #include "QA/Perfomance/PerfomanceTestTypes.h"
@@ -14,16 +15,14 @@ struct FLevelPointsIterator
 {
 	GENERATED_BODY()
 
-	using PerfPointsArray_T = TArray<TObjectPtr<ADP_PerfomancePoint_Actor>>;
-	
 	UPROPERTY()
-	TArray<TObjectPtr<ADP_PerfomancePoint_Actor>> LevelPoints;
+	TArray<FPerfomancePointData> LevelPoints;
 	uint32 CurrentRegionIndex;
 
 	bool PassedAll() const { return CurrentRegionIndex == LevelPoints.Num();}
-	ADP_PerfomancePoint_Actor* GetCurrent() const { return CurrentRegionIndex >= static_cast<uint32>(LevelPoints.Num()) ? nullptr : LevelPoints[CurrentRegionIndex]; }
+	ADP_PerfomancePoint_Actor* GetCurrent() const;
 	ADP_PerfomancePoint_Actor* Next() { ++CurrentRegionIndex; return GetCurrent(); }
-	void SetNewPointsArray(const PerfPointsArray_T& _newArray) { LevelPoints = _newArray;}
+	void SetNewPointsArray(const TArray<FPerfomancePointData>& _newArray) { LevelPoints = _newArray;}
 	void ResetPointer() { CurrentRegionIndex = 0u; }
 };
 
@@ -37,7 +36,7 @@ public:
 	UDP_LevelPerfomanceRecorder_ACC();
 
 	virtual void PostInitProperties() override;
-	void BeginPerfomanceRecording(const TArray<TObjectPtr<ADP_PerfomancePoint_Actor>>& _levelRegions);
+	void BeginPerfomanceRecording(const TArray<FPerfomancePointData>& _levelRegions);
 	FFinishedRecordingEvent& OnFinishedRecording() { return FinishedRecordingEvent; }
 	
 protected:
