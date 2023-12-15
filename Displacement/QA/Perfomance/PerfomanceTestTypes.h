@@ -38,4 +38,28 @@ struct FPerfomanceTestLevelData
 	TArray<FPerfomanceTestRegionData> RegionDatas{};
 };
 
+USTRUCT()
+struct FPerfomanceTestRequest
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString Name{};
+	UPROPERTY()
+	FString Path{};
+	UPROPERTY()
+	bool bIsEnabled{};
+};
+
+USTRUCT()
+struct FPerfomanceTestRequestCollection
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<FPerfomanceTestRequest> Data{};
+};
+
+
+
 

@@ -90,21 +90,26 @@ namespace
 
 void DisplacementPerfomanceTest::GetTests(TArray<FString>& _outBeautifiedNames, TArray<FString>& _outTestCommands) const
 {
-	struct FTestData
-	{
-		FString TestName;
-		FString MapPath;
-	};
-	
-	const TArray<FTestData> testData =  
-	{
-		{"PerfomanceMap", Displacement::Test::DisplacementPerfomanceLevel},  
-	};
+	FPerfomanceTestRequestCollection perfomanceTestRequest{};
+	Displacement::Test::ReadPerfomanceTestList(perfomanceTestRequest);
 
-	for (const FTestData& oneTestData : testData)
+	TArray<int32> enabledMapsIndices{};
+
+	for(int32 i = 0; i < perfomanceTestRequest.Data.Num(); ++i)
 	{
-		_outBeautifiedNames.Add(oneTestData.TestName);
-		_outTestCommands.Add(FString::Printf(TEXT("%s"), *oneTestData.MapPath));
+		if(perfomanceTestRequest.Data[i].bIsEnabled)
+		{
+			enabledMapsIndices.Add(i);
+		}
+	}
+
+	for (int32 i = 0; i < enabledMapsIndices.Num(); ++i)
+	{
+		const uint32 enabledTestIndex = enabledMapsIndices[i];
+		FPerfomanceTestRequest& request = perfomanceTestRequest.Data[enabledTestIndex];
+
+		_outBeautifiedNames.Add(request.Name);
+		_outTestCommands.Add(request.Path);
 	}
 }
 
