@@ -13,15 +13,15 @@ struct FPerfomanceTestRegionMetrics
 	UPROPERTY()
 	FString RegionName{};
 	UPROPERTY()
-	float AverageFPS{};
+	float TicksPerSecond{};
 	UPROPERTY()
 	float MaxFPSDelta{};
 
 	void Reset()
 	{
 		RegionName.Reset();
-		AverageFPS = 0.0f;
 		MaxFPSDelta = 0.0f;
+		TicksPerSecond = 0.0f;
 	}
 };
 
@@ -60,11 +60,11 @@ struct FPerfomanceTestRequestCollection
 	TArray<FPerfomanceTestRequest> Data{};
 };
 
-class FPSCounter
+class FTickCounter
 {
 public:
-	FPSCounter() = default;
-	float GetAverageFPS(float _timePassed) const { return static_cast<float>(TickCounter) / _timePassed; }
+	FTickCounter() = default;
+	uint32 GetTicksAmount() const { return TickCounter; }
 	void Reset() { TickCounter = 0u; }
 	void AddTick() { ++TickCounter; }
 private:
@@ -76,13 +76,12 @@ class FFPSMetricsCollector
 public:
 	FFPSMetricsCollector() = default;
 	float GetMaxFPSDelta() const { return MaxFPSDelta; }
-	void StartCollect() { FrameCounter.Reset(); MaxFPSDelta = 0.0f; TimeSinceStart = 0.0f; }
+	void StartCollect() { TickCounter.Reset(); MaxFPSDelta = 0.0f; }
 	void Tick(float _deltaTime);
-	float GetAverageFPS() const { return FrameCounter.GetAverageFPS(TimeSinceStart); }
+	uint32 GetTickAmount() const { return TickCounter.GetTicksAmount(); }
 private:
-	FPSCounter FrameCounter;
+	FTickCounter TickCounter;
 	float MaxFPSDelta;
-	float TimeSinceStart;
 };
 
 template<typename T>

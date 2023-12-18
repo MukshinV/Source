@@ -37,7 +37,7 @@ void FPerfomancePointTransitioner::SetInterpolationValue(float _interpolationVal
 
 const FPerfomanceTestRegionMetrics& FPerfomancePointTransitioner::CollectTransitionMetrics()
 {
-	TransitionMetrics.AverageFPS = MetricsCollector.GetAverageFPS();
+	TransitionMetrics.TicksPerSecond = MetricsCollector.GetTickAmount() / TransitionDuration;
 	TransitionMetrics.MaxFPSDelta = MetricsCollector.GetMaxFPSDelta();
 	return TransitionMetrics;
 }

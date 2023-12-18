@@ -35,8 +35,7 @@ void UDP_PointPerfomanceRecorder::ExitRecordingPoint()
 void FFPSMetricsCollector::Tick(float _deltaTime)
 {
 	MaxFPSDelta = FMath::Max(_deltaTime, MaxFPSDelta);
-	FrameCounter.AddTick();
-	TimeSinceStart += _deltaTime;
+	TickCounter.AddTick();
 }
 
 bool UDP_PointPerfomanceRecorder::IsRegionRecording() const
@@ -74,8 +73,8 @@ void UDP_PointPerfomanceRecorder::UpdateTestMetrics(float _deltaTime)
 
 FPerfomanceTestRegionMetrics UDP_PointPerfomanceRecorder::CollectTestMetrics()
 {
-	PointMetrics.AverageFPS = MetricsCollector.GetAverageFPS();
+	PointMetrics.TicksPerSecond = MetricsCollector.GetTickAmount() / CurrentPoint->GetWaitAmount();
 	PointMetrics.MaxFPSDelta = MetricsCollector.GetMaxFPSDelta();
-
+	
 	return PointMetrics;
 }
