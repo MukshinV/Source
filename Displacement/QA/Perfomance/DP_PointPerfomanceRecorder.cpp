@@ -5,14 +5,14 @@
 
 void UDP_PointPerfomanceRecorder::SetRecordingPoint(ADP_PerfomancePoint_Actor* _pointToRecord)
 {
-	check(_pointToRecord)
+	check(_pointToRecord);
 	
 	CurrentPoint = _pointToRecord;
 }
 
 void UDP_PointPerfomanceRecorder::EnterRecordingPoint()
 {
-	check(CurrentPoint)
+	check(CurrentPoint);
 	
 	PointMetrics.Reset();
 	MetricsCollector.StartCollect();

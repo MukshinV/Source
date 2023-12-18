@@ -12,7 +12,7 @@
 #include "QA/Perfomance/PerfomanceTestUtils.h"
 
 IMPLEMENT_COMPLEX_AUTOMATION_TEST(DisplacementPerfomanceTest, "Displacement.Displacement.QA.Tests.PerfomanceTest",
-                                  EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::PerfFilter)
+                                  EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::PerfFilter);
 
 namespace
 {
@@ -45,7 +45,7 @@ namespace
 	const TArray<FPerfomancePointData>& FPerfomanceTestLatentCommand::GetPerfomanceTestPoints(UWorld* _world)
 	{
 		AActor* foundActor = UGameplayStatics::GetActorOfClass(_world, PointsCollection_A::StaticClass());
-		check(foundActor)
+		check(foundActor);
 		const PointsCollection_A* pointsCollection = CastChecked<PointsCollection_A>(foundActor);
 		return pointsCollection->GetPointsCollection();
 	}
@@ -53,7 +53,7 @@ namespace
 	void FPerfomanceTestLatentCommand::SetupActors(UWorld* _world, APawn* _testPawn)
 	{
 		APlayerController* playerController = _world->GetFirstPlayerController();
-		check(playerController)
+		check(playerController);
 
 		playerController->DisableInput(playerController);
 		playerController->Possess(_testPawn);
@@ -68,17 +68,17 @@ namespace
 	void FPerfomanceTestLatentCommand::PrepareTest()
 	{
 		UWorld* world = Displacement::Test::GetTestWorld();
-		check(world)
+		check(world);
 
 		FString levelName = UGameplayStatics::GetCurrentLevelName(world);
 
 		const APlayerController* playerController = UGameplayStatics::GetPlayerController(world, 0);
-		check(playerController)
+		check(playerController);
 
 		const TArray<FPerfomancePointData>& pointsCollection = GetPerfomanceTestPoints(world);
 
 		APawn* testPawn = Displacement::Test::CreateBlueprint<APawn>(world, Displacement::Test::DisplacementPerfomancePawn);
-		check(testPawn)
+		check(testPawn);
 	
 		SetupActors(world, testPawn);
 		
@@ -148,7 +148,7 @@ bool DisplacementPerfomanceTest::RunTest(const FString& _parameters)
 
 	const Displacement::Test::LevelScope level{parsedParams[0]};
 	
-	ADD_LATENT_AUTOMATION_COMMAND(FPerfomanceTestLatentCommand{})
+	ADD_LATENT_AUTOMATION_COMMAND(FPerfomanceTestLatentCommand{});
 	
 	return true;
 }
