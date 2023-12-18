@@ -14,14 +14,35 @@
 IMPLEMENT_COMPLEX_AUTOMATION_TEST(DisplacementPerfomanceTest, "Displacement.Displacement.QA.Tests.PerfomanceTest",
                                   EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::PerfFilter)
 
-DEFINE_LOG_CATEGORY_STATIC(LogPerfomanceTest, All, All)
-
 namespace
 {
 	using LevelRecorder_ACC = UDP_LevelPerfomanceRecorder_ACC;
 	using PointsCollection_A = ADP_PerfomancePointCollection_Actor;
 
-	const TArray<FPerfomancePointData>& GetPerfomanceTestPoints(UWorld* _world)
+	class FPerfomanceTestLatentCommand : public IAutomationLatentCommand
+	{
+	public:
+		FPerfomanceTestLatentCommand() :
+			LevelRecorder(),
+			bIsInitialized(false),
+			bIsTestFinished(false)
+		{}
+		
+	private:
+		LevelRecorder_ACC* LevelRecorder;
+		bool bIsInitialized;
+		bool bIsTestFinished;
+
+		void PrepareTest();
+		void SetupActors(UWorld* _world, APawn* _testPawn);
+		const TArray<FPerfomancePointData>& GetPerfomanceTestPoints(UWorld* _world);
+
+		virtual bool Update() override;
+		
+		void OnTestFinished(FPerfomanceTestLevelData _result);
+	};
+
+	const TArray<FPerfomancePointData>& FPerfomanceTestLatentCommand::GetPerfomanceTestPoints(UWorld* _world)
 	{
 		AActor* foundActor = UGameplayStatics::GetActorOfClass(_world, PointsCollection_A::StaticClass());
 		check(foundActor)
@@ -29,7 +50,7 @@ namespace
 		return pointsCollection->GetPointsCollection();
 	}
 
-	void SetupActors(UWorld* _world, APawn* _testPawn)
+	void FPerfomanceTestLatentCommand::SetupActors(UWorld* _world, APawn* _testPawn)
 	{
 		APlayerController* playerController = _world->GetFirstPlayerController();
 		check(playerController)
@@ -44,37 +65,52 @@ namespace
 		}
 	}
 
-	class FUntilEndOfPerfomanceTestLatentCommand : public IAutomationLatentCommand
+	void FPerfomanceTestLatentCommand::PrepareTest()
 	{
-	public:
-		FUntilEndOfPerfomanceTestLatentCommand(LevelRecorder_ACC* _levelRecorder) :
-			levelRecorder(_levelRecorder),
-			bIsTestFinished(false)
-		{
-			levelRecorder->OnFinishedRecording().AddRaw(this, &FUntilEndOfPerfomanceTestLatentCommand::OnTestFinished);
-		}
+		UWorld* world = Displacement::Test::GetTestWorld();
+		check(world)
+
+		FString levelName = UGameplayStatics::GetCurrentLevelName(world);
+
+		const APlayerController* playerController = UGameplayStatics::GetPlayerController(world, 0);
+		check(playerController)
+
+		const TArray<FPerfomancePointData>& pointsCollection = GetPerfomanceTestPoints(world);
+
+		APawn* testPawn = Displacement::Test::CreateBlueprint<APawn>(world, Displacement::Test::DisplacementPerfomancePawn);
+		check(testPawn)
+	
+		SetupActors(world, testPawn);
 		
-		virtual bool Update() override
+		UActorComponent* foundComponent = testPawn->AddComponentByClass(UDP_LevelPerfomanceRecorder_ACC::StaticClass(), false, FTransform::Identity, false);
+		LevelRecorder = CastChecked<LevelRecorder_ACC>(foundComponent);
+	
+		LevelRecorder->BeginPerfomanceRecording(pointsCollection);
+		LevelRecorder->OnFinishedRecording().AddRaw(this, &FPerfomanceTestLatentCommand::OnTestFinished);
+	}
+	
+	bool FPerfomanceTestLatentCommand::Update()
+	{
+		if(!bIsInitialized)
 		{
-			return bIsTestFinished;
+			PrepareTest();
+			bIsInitialized = true;
 		}
-
-		void OnTestFinished(FPerfomanceTestLevelData _result)
-		{
-			levelRecorder->OnFinishedRecording().Clear();
 			
-			const UWorld* world = levelRecorder->GetWorld();
-			check(world)
+		return bIsTestFinished;
+	}
+	
+	void FPerfomanceTestLatentCommand::OnTestFinished(FPerfomanceTestLevelData _result)
+	{
+		LevelRecorder->OnFinishedRecording().Clear();
 			
-			Displacement::Test::WritePerfomanceTestData(UGameplayStatics::GetCurrentLevelName(world), _result);
+		const UWorld* world = LevelRecorder->GetWorld();
+		check(world)
 			
-			bIsTestFinished = true;
-		}
-
-	private:
-		LevelRecorder_ACC* levelRecorder;
-		bool bIsTestFinished;
-	};
+		Displacement::Test::WritePerfomanceTestData(UGameplayStatics::GetCurrentLevelName(world), _result);
+			
+		bIsTestFinished = true;
+	}
 	
 }
 
@@ -111,25 +147,8 @@ bool DisplacementPerfomanceTest::RunTest(const FString& _parameters)
 	if (!TestTrue("Map name should exist", parsedParams.Num() == 1)) return false;
 
 	const Displacement::Test::LevelScope level{parsedParams[0]};
-
-	UWorld* world = Displacement::Test::GetTestWorld();
-	if (!TestNotNull("World not exists", world)) return false;
-
-	APlayerController* playerController = UGameplayStatics::GetPlayerController(world, 0);
-	if (!TestNotNull("Character exists", playerController)) return false;
-
-	const TArray<FPerfomancePointData>& pointsCollection = GetPerfomanceTestPoints(world);
-
-	APawn* testPawn = Displacement::Test::CreateBlueprint<APawn>(world, Displacement::Test::DisplacementPerfomancePawn);
-	check(testPawn)
 	
-	SetupActors(world, testPawn);
-		
-	UActorComponent* foundComponent = testPawn->AddComponentByClass(UDP_LevelPerfomanceRecorder_ACC::StaticClass(), false, FTransform::Identity, false);
-	LevelRecorder_ACC* levelRecorderComponent = CastChecked<LevelRecorder_ACC>(foundComponent);
-	
-	levelRecorderComponent->BeginPerfomanceRecording(pointsCollection);
-	ADD_LATENT_AUTOMATION_COMMAND(FUntilEndOfPerfomanceTestLatentCommand{levelRecorderComponent})
+	ADD_LATENT_AUTOMATION_COMMAND(FPerfomanceTestLatentCommand{})
 	
 	return true;
 }
