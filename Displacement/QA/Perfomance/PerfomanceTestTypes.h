@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MathUtil.h"
 #include "PerfomanceTestTypes.generated.h"
 
 USTRUCT()
@@ -58,6 +59,22 @@ struct FPerfomanceTestRequestCollection
 
 	UPROPERTY()
 	TArray<FPerfomanceTestRequest> Data{};
+};
+
+struct FPerfomanceTestTimer
+{
+	float TimePassed;
+	float WaitDurationSeconds;
+
+	void AddDeltaTime(float _deltaTime) { TimePassed += _deltaTime;}
+	bool IsRunning() const { return TimePassed < WaitDurationSeconds; }
+	void Reset() { TimePassed = 0.0f; WaitDurationSeconds = 0.0f; }
+	void SetWaitDuration(float _waitDuration) { WaitDurationSeconds = _waitDuration; }
+	float GetRatio() const
+	{
+		check(WaitDurationSeconds != 0.0f)
+		return TimePassed / WaitDurationSeconds;
+	}
 };
 
 class FTickCounter

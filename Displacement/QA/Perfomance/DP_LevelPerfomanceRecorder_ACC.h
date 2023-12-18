@@ -32,7 +32,7 @@ class FPerfomancePointTransitioner
 public:
 	FPerfomancePointTransitioner() = default;
 	bool IsInTransition() const { return !PositionInterpolator.IsFinished() || !RotationInterpolator.IsFinished(); }
-	bool IsNeedToCollectMetrics() const { return TransitionDuration > 0.0f; }
+	bool IsNeedToCollectMetrics() const { return Timer.WaitDurationSeconds > 0.0f; }
 	void StartTransition(const ADP_PerfomancePoint_Actor* _fromPoint, const ADP_PerfomancePoint_Actor* _toPoint, float _transitionDuration);
 	void Tick(float _deltaTime);
 	void MoveToInterpolatedTransform(AActor* _targetActorToMove) const;
@@ -44,12 +44,10 @@ private:
 	
 	FFPSMetricsCollector MetricsCollector;
 	FPerfomanceTestRegionMetrics TransitionMetrics;
-
-	float TimePassed;
-	float TransitionDuration;
+	FPerfomanceTestTimer Timer;
 
 	void SetInterpolationValue(float _interpolationValue); 
-	void Reset() { PositionInterpolator.Reset(); RotationInterpolator.Reset(); TimePassed = 0.0f; }
+	void Reset() { PositionInterpolator.Reset(); RotationInterpolator.Reset(); Timer.TimePassed = 0.0f; }
 };
 
 

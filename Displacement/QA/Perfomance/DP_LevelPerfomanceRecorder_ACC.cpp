@@ -37,7 +37,7 @@ void FPerfomancePointTransitioner::SetInterpolationValue(float _interpolationVal
 
 const FPerfomanceTestRegionMetrics& FPerfomancePointTransitioner::CollectTransitionMetrics()
 {
-	TransitionMetrics.TicksPerSecond = MetricsCollector.GetTickAmount() / TransitionDuration;
+	TransitionMetrics.TicksPerSecond = MetricsCollector.GetTickAmount() / Timer.WaitDurationSeconds;
 	TransitionMetrics.MaxFPSDelta = MetricsCollector.GetMaxFPSDelta();
 	return TransitionMetrics;
 }
@@ -49,7 +49,7 @@ void FPerfomancePointTransitioner::StartTransition(const ADP_PerfomancePoint_Act
 
 	Reset();
 
-	TransitionDuration = _transitionDuration;
+	Timer.SetWaitDuration(_transitionDuration);
 	MetricsCollector.StartCollect();
 
 	const FString fromPointName = _fromPoint->GetRegionName().ToString();
@@ -71,8 +71,8 @@ void FPerfomancePointTransitioner::Tick(float _deltaTime)
 {
 	MetricsCollector.Tick(_deltaTime);
 
-	TimePassed += _deltaTime;
-	SetInterpolationValue(TimePassed / TransitionDuration);
+	Timer.AddDeltaTime(_deltaTime);
+	SetInterpolationValue(Timer.GetRatio());
 }
 
 UDP_LevelPerfomanceRecorder_ACC::UDP_LevelPerfomanceRecorder_ACC()
