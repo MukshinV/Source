@@ -20,18 +20,45 @@ struct FLevelPointsIterator
 	uint32 CurrentRegionIndex;
 
 	bool PassedAll() const { return CurrentRegionIndex == LevelPoints.Num();}
-	ADP_PerfomancePoint_Actor* GetCurrent() const;
-	ADP_PerfomancePoint_Actor* Next() { ++CurrentRegionIndex; return GetCurrent(); }
+	const FPerfomancePointData* GetCurrent() const;
+	const FPerfomancePointData* Next() { ++CurrentRegionIndex; return GetCurrent(); }
+	const FPerfomancePointData* PeekPrevious();
 	void SetNewPointsArray(const TArray<FPerfomancePointData>& _newArray) { LevelPoints = _newArray;}
 	void ResetPointer() { CurrentRegionIndex = 0u; }
 };
+
+class FPerfomancePointTransitioner
+{
+public:
+	FPerfomancePointTransitioner() = default;
+	bool IsInTransition() const { return !PositionInterpolator.IsFinished() || !RotationInterpolator.IsFinished(); }
+	bool IsNeedToCollectMetrics() const { return TransitionDuration > 0.0f; }
+	void StartTransition(const ADP_PerfomancePoint_Actor* _fromPoint, const ADP_PerfomancePoint_Actor* _toPoint, float _transitionDuration);
+	void Tick(float _deltaTime);
+	void MoveToInterpolatedTransform(AActor* _targetActorToMove) const;
+	void SetMaxInterpolationValue() { SetInterpolationValue(1.0f); }
+	const FPerfomanceTestRegionMetrics& CollectTransitionMetrics();
+private:
+	FPositionInterpolator PositionInterpolator;
+	FRotationInterpolator RotationInterpolator;
+	
+	FFPSMetricsCollector MetricsCollector;
+	FPerfomanceTestRegionMetrics TransitionMetrics;
+
+	float TimePassed;
+	float TransitionDuration;
+
+	void SetInterpolationValue(float _interpolationValue); 
+	void Reset() { PositionInterpolator.Reset(); RotationInterpolator.Reset(); TimePassed = 0.0f; }
+};
+
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DISPLACEMENT_API UDP_LevelPerfomanceRecorder_ACC : public UActorComponent
 {
 	GENERATED_BODY()
 
-	DECLARE_EVENT_OneParam(UDP_LevelPerfomanceRecorder_ACC, FFinishedRecordingEvent, FPerfomanceTestLevelData)
+	DECLARE_EVENT_OneParam(UDP_LevelPerfomanceRecorder_ACC, FFinishedRecordingEvent, FPerfomanceTestLevelMetrics)
 public:
 	UDP_LevelPerfomanceRecorder_ACC();
 
@@ -48,10 +75,13 @@ private:
 	TObjectPtr<UDP_PointPerfomanceRecorder> PointRecorder;
 	
 	FFinishedRecordingEvent FinishedRecordingEvent;
-	FPerfomanceTestLevelData LevelTestResult;
+	FPerfomanceTestLevelMetrics LevelTestResult;
 	FLevelPointsIterator LevelPointsIterator;
+	FPerfomancePointTransitioner PointTransitioner;
 
-	void MoveOwnerToNextRegion() const;
+	void EnterToCurrentPoint() const;
+	
+	void StartMoveOwnerToNextPoint();
 	void CollectPointRecordingResults();
 	bool TryToSwitchToNextPoint();
 };

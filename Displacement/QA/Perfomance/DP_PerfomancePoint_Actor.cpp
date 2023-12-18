@@ -17,7 +17,7 @@ void ADP_PerfomancePoint_Actor::BeginPlay()
 
 void ADP_PerfomancePoint_Actor::OnStartedStageRecording()
 {
-	UE_LOG(LogPerfomancePoint, Log, TEXT("Started recording perfomance point stage: %s"), *GetRegionName().ToString())
+	UE_LOG(LogPerfomancePoint, Log, TEXT("Started recording perfomance point stage: %s"), *GetRegionName().ToString());
 	
 	Timer.Reset();
 	Timer.SetWaitDuration(WaitAmountSeconds);

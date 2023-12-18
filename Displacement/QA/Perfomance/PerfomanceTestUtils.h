@@ -9,7 +9,7 @@ namespace Displacement
 {
 	namespace Test
 	{
-		bool WritePerfomanceTestData(const FString& _fileName, const FPerfomanceTestLevelData& _testResult);
+		bool WritePerfomanceTestData(const FString& _fileName, const FPerfomanceTestLevelMetrics& _testResult);
 		bool ReadPerfomanceTestList(FPerfomanceTestRequestCollection& _requests);
 	}
 }

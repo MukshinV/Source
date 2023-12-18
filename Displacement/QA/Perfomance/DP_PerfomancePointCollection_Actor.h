@@ -22,7 +22,9 @@ struct FPerfomancePointData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Setup")
 	TObjectPtr<ADP_PerfomancePoint_Actor> Point;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Setup")
-	EPerfomancePointTransitionMode TransitionToNextMode;
+	EPerfomancePointTransitionMode TransitionToPointMode;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Setup")
+	float TransitionDuration{ 2.0f };
 };
 
 UCLASS()

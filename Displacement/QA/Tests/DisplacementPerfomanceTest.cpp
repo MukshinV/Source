@@ -39,7 +39,7 @@ namespace
 
 		virtual bool Update() override;
 		
-		void OnTestFinished(FPerfomanceTestLevelData _result);
+		void OnTestFinished(FPerfomanceTestLevelMetrics _result);
 	};
 
 	const TArray<FPerfomancePointData>& FPerfomanceTestLatentCommand::GetPerfomanceTestPoints(UWorld* _world)
@@ -100,7 +100,7 @@ namespace
 		return bIsTestFinished;
 	}
 	
-	void FPerfomanceTestLatentCommand::OnTestFinished(FPerfomanceTestLevelData _result)
+	void FPerfomanceTestLatentCommand::OnTestFinished(FPerfomanceTestLevelMetrics _result)
 	{
 		LevelRecorder->OnFinishedRecording().Clear();
 			

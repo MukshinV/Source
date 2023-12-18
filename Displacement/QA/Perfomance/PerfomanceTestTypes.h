@@ -6,7 +6,7 @@
 #include "PerfomanceTestTypes.generated.h"
 
 USTRUCT()
-struct FPerfomanceTestRegionData
+struct FPerfomanceTestRegionMetrics
 {
 	GENERATED_BODY()
 
@@ -26,7 +26,7 @@ struct FPerfomanceTestRegionData
 };
 
 USTRUCT()
-struct FPerfomanceTestLevelData
+struct FPerfomanceTestLevelMetrics
 {
 	GENERATED_BODY()
 
@@ -35,7 +35,7 @@ struct FPerfomanceTestLevelData
 	UPROPERTY()
 	FString PerfomanceTestDate{};
 	UPROPERTY()
-	TArray<FPerfomanceTestRegionData> RegionDatas{};
+	TArray<FPerfomanceTestRegionMetrics> RegionDatas{};
 };
 
 USTRUCT()
@@ -60,6 +60,49 @@ struct FPerfomanceTestRequestCollection
 	TArray<FPerfomanceTestRequest> Data{};
 };
 
+class FPSCounter
+{
+public:
+	FPSCounter() = default;
+	float GetAverageFPS(float _timePassed) const { return static_cast<float>(TickCounter) / _timePassed; }
+	void Reset() { TickCounter = 0u; }
+	void AddTick() { ++TickCounter; }
+private:
+	uint32 TickCounter{};
+}; 
+
+class FFPSMetricsCollector
+{
+public:
+	FFPSMetricsCollector() = default;
+	float GetMaxFPSDelta() const { return MaxFPSDelta; }
+	void StartCollect() { FrameCounter.Reset(); MaxFPSDelta = 0.0f; TimeSinceStart = 0.0f; }
+	void Tick(float _deltaTime);
+	float GetAverageFPS() const { return FrameCounter.GetAverageFPS(TimeSinceStart); }
+private:
+	FPSCounter FrameCounter;
+	float MaxFPSDelta;
+	float TimeSinceStart;
+};
+
+template<typename T>
+class FLinearInterpolator
+{
+public:
+	FLinearInterpolator() = default;
+	bool IsFinished() const { return InterpolationValue >= 1.0f; }
+	void SetData(const T& _first, const T& _second) { First = _first; Second = _second; }
+	T GetInterpolatedData() const { return FMath::Lerp(First, Second, InterpolationValue); }
+	void SetInterpolationValue(float _interpolationValue) { InterpolationValue = FMath::Min(1.0f, _interpolationValue);}
+	void Reset() { InterpolationValue = 0.0f; }
+private:
+	T First;
+	T Second;
+	float InterpolationValue{ 1.0f };
+};
+
+using FPositionInterpolator = FLinearInterpolator<FVector>;
+using FRotationInterpolator = FLinearInterpolator<FRotator>;
 
 
 

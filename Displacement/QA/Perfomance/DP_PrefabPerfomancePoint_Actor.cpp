@@ -15,8 +15,8 @@ void ADP_PrefabPerfomancePoint_Actor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	check(PrefabTable)
-	check(PrefabSpawnPoint)
+	check(PrefabTable);
+	check(PrefabSpawnPoint);
 }
 
 bool ADP_PrefabPerfomancePoint_Actor::IsRecording() const
@@ -45,7 +45,7 @@ void ADP_PrefabPerfomancePoint_Actor::OnStartedStageRecording()
 
 	const UWorld* world = GetWorld();
 	const TestPrefabUnit_F* unit = PrefabIterator.GetPrefab(PrefabTable);
-	check(unit)
+	check(unit);
 
 	const FTransform& spawnTransform = PrefabSpawnPoint->GetActorTransform();
 	

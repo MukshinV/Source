@@ -8,7 +8,6 @@
 #include "UObject/Object.h"
 #include "DP_PointPerfomanceRecorder.generated.h"
 
-
 UCLASS()
 class DISPLACEMENT_API UDP_PointPerfomanceRecorder : public UObject
 {
@@ -16,25 +15,18 @@ class DISPLACEMENT_API UDP_PointPerfomanceRecorder : public UObject
 public:
 	bool IsRegionRecording() const;
 	bool CanMoveToNextStage() const;
-	
+
+	bool IsOnRecordingPoint(const ADP_PerfomancePoint_Actor* _pointToCheck) const { return CurrentPoint == _pointToCheck; };
 	void SetRecordingPoint(ADP_PerfomancePoint_Actor* _pointToRecord);
 	void EnterRecordingPoint();
 	void ExitRecordingPoint();
 
 	void UpdateTestMetrics(float _deltaTime);
-	FPerfomanceTestRegionData CollectTestMetrics();
+	FPerfomanceTestRegionMetrics CollectTestMetrics();
 	void MoveToNextPointStage();
 private:
 	UPROPERTY()
 	TObjectPtr<ADP_PerfomancePoint_Actor> CurrentPoint;
-	FPerfomanceTestRegionData RegionData;
-
-	struct FPSCounter
-	{
-		uint32 TickCounter;
-
-		float GetAverageFPS(float _timePassed) const { return static_cast<float>(TickCounter) / _timePassed; }
-		void Reset() { TickCounter = 0u; }
-		void AddTick() { ++TickCounter; }
-	} FPSCounter;
+	FPerfomanceTestRegionMetrics PointMetrics;
+	FFPSMetricsCollector MetricsCollector;
 };

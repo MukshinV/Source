@@ -14,13 +14,13 @@ void UDP_PointPerfomanceRecorder::EnterRecordingPoint()
 {
 	check(CurrentPoint)
 	
-	RegionData.Reset();
-	FPSCounter.Reset();
+	PointMetrics.Reset();
+	MetricsCollector.StartCollect();
 	
 	CurrentPoint->OnRecorderEntered();
 	CurrentPoint->OnStartedStageRecording();
 
-	RegionData.RegionName = CurrentPoint->GetRegionName().ToString();
+	PointMetrics.RegionName = CurrentPoint->GetRegionName().ToString();
 }
 
 void UDP_PointPerfomanceRecorder::ExitRecordingPoint()
@@ -30,6 +30,13 @@ void UDP_PointPerfomanceRecorder::ExitRecordingPoint()
 	if(!CurrentPoint->IsRecording()) return;
 
 	CurrentPoint->OnRecorderExit();
+}
+
+void FFPSMetricsCollector::Tick(float _deltaTime)
+{
+	MaxFPSDelta = FMath::Max(_deltaTime, MaxFPSDelta);
+	FrameCounter.AddTick();
+	TimeSinceStart += _deltaTime;
 }
 
 bool UDP_PointPerfomanceRecorder::IsRegionRecording() const
@@ -52,25 +59,23 @@ void UDP_PointPerfomanceRecorder::MoveToNextPointStage()
 
 	CurrentPoint->MoveToNextStage();
 
-	RegionData.Reset();
-	FPSCounter.Reset();
+	PointMetrics.Reset();
+	MetricsCollector.StartCollect();
 	
-	RegionData.RegionName = CurrentPoint->GetRegionName().ToString();
+	PointMetrics.RegionName = CurrentPoint->GetRegionName().ToString();
 	
 	CurrentPoint->OnStartedStageRecording();
 }
 
 void UDP_PointPerfomanceRecorder::UpdateTestMetrics(float _deltaTime)
 {
-	RegionData.MaxFPSDelta = FMath::Max(_deltaTime, RegionData.MaxFPSDelta);
-	FPSCounter.AddTick();
+	MetricsCollector.Tick(_deltaTime);
 }
 
-FPerfomanceTestRegionData UDP_PointPerfomanceRecorder::CollectTestMetrics()
+FPerfomanceTestRegionMetrics UDP_PointPerfomanceRecorder::CollectTestMetrics()
 {
-	const float secondsSinceStart = CurrentPoint->GetPassedTimeSinceRecordingStart();
-	const float averageFps = FPSCounter.GetAverageFPS(secondsSinceStart);
-	RegionData.AverageFPS = averageFps;
+	PointMetrics.AverageFPS = MetricsCollector.GetAverageFPS();
+	PointMetrics.MaxFPSDelta = MetricsCollector.GetMaxFPSDelta();
 
-	return RegionData;
+	return PointMetrics;
 }
