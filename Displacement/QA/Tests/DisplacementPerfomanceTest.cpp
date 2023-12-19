@@ -1,5 +1,4 @@
-﻿#include "QA/Perfomance/DP_PerfomancePointCollection_Actor.h"
-#if WITH_AUTOMATION_TESTS
+﻿#if WITH_AUTOMATION_TESTS
 
 #include "EngineUtils.h"
 #include "Misc/AutomationTest.h"
@@ -17,7 +16,6 @@ IMPLEMENT_COMPLEX_AUTOMATION_TEST(DisplacementPerfomanceTest, "Displacement.Disp
 namespace
 {
 	using LevelRecorder_ACC = UDP_LevelPerfomanceRecorder_ACC;
-	using PointsCollection_A = ADP_PerfomancePointCollection_Actor;
 
 	class FPerfomanceTestLatentCommand : public IAutomationLatentCommand
 	{
@@ -35,19 +33,34 @@ namespace
 
 		void PrepareTest();
 		void SetupActors(UWorld* _world, APawn* _testPawn);
-		const TArray<FPerfomancePointData>& GetPerfomanceTestPoints(UWorld* _world);
+		FPerfomanceCollectResult GetPerfomanceTestPoints(UWorld* _world);
 
 		virtual bool Update() override;
 		
 		void OnTestFinished(FPerfomanceTestLevelMetrics _result);
 	};
 
-	const TArray<FPerfomancePointData>& FPerfomanceTestLatentCommand::GetPerfomanceTestPoints(UWorld* _world)
+	FPerfomanceCollectResult FPerfomanceTestLatentCommand::GetPerfomanceTestPoints(UWorld* _world)
 	{
-		AActor* foundActor = UGameplayStatics::GetActorOfClass(_world, PointsCollection_A::StaticClass());
-		check(foundActor);
-		const PointsCollection_A* pointsCollection = CastChecked<PointsCollection_A>(foundActor);
-		return pointsCollection->GetPointsCollection();
+		FPerfomanceCollectResult collectResult{};
+		
+		for (TActorIterator<ADP_PerfomancePoint_Actor> It(_world, ADP_PerfomancePoint_Actor::StaticClass()); It; ++It)
+		{
+			ADP_PerfomancePoint_Actor* foundPoint = *It;
+			FName pointName = foundPoint->GetRegionName();
+			check(!collectResult.PointsCollection.Contains(pointName))
+			collectResult.PointsCollection.Add(pointName, foundPoint);
+
+			if(!collectResult.PathTable)
+			{
+				FDataTableRowHandle rowHandle = foundPoint->GetRowHandle();
+				check(rowHandle.DataTable);
+
+				collectResult.PathTable = rowHandle.DataTable;
+			}
+		}
+
+		return collectResult;
 	}
 
 	void FPerfomanceTestLatentCommand::SetupActors(UWorld* _world, APawn* _testPawn)
@@ -75,7 +88,7 @@ namespace
 		const APlayerController* playerController = UGameplayStatics::GetPlayerController(world, 0);
 		check(playerController);
 
-		const TArray<FPerfomancePointData>& pointsCollection = GetPerfomanceTestPoints(world);
+		FPerfomanceCollectResult collectResult = GetPerfomanceTestPoints(world);
 
 		APawn* testPawn = Displacement::Test::CreateBlueprint<APawn>(world, Displacement::Test::DisplacementPerfomancePawn);
 		check(testPawn);
@@ -84,8 +97,8 @@ namespace
 		
 		UActorComponent* foundComponent = testPawn->AddComponentByClass(UDP_LevelPerfomanceRecorder_ACC::StaticClass(), false, FTransform::Identity, false);
 		LevelRecorder = CastChecked<LevelRecorder_ACC>(foundComponent);
-	
-		LevelRecorder->BeginPerfomanceRecording(pointsCollection);
+
+		LevelRecorder->BeginPerfomanceRecording(collectResult);
 		LevelRecorder->OnFinishedRecording().AddRaw(this, &FPerfomanceTestLatentCommand::OnTestFinished);
 	}
 	
@@ -135,7 +148,7 @@ void DisplacementPerfomanceTest::GetTests(TArray<FString>& _outBeautifiedNames, 
 		FPerfomanceTestRequest& request = perfomanceTestRequest.Data[enabledTestIndex];
 
 		_outBeautifiedNames.Add(request.Name);
-		_outTestCommands.Add(request.Path);
+		_outTestCommands.Add(*request.Path);
 	}
 }
 

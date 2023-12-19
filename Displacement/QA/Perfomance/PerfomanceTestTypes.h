@@ -6,6 +6,8 @@
 #include "MathUtil.h"
 #include "PerfomanceTestTypes.generated.h"
 
+class ADP_PerfomancePoint_Actor;
+
 USTRUCT()
 struct FPerfomanceTestRegionMetrics
 {
@@ -49,6 +51,8 @@ struct FPerfomanceTestRequest
 	UPROPERTY()
 	FString Path{};
 	UPROPERTY()
+	FString PathTable{};
+	UPROPERTY()
 	bool bIsEnabled{};
 };
 
@@ -59,6 +63,35 @@ struct FPerfomanceTestRequestCollection
 
 	UPROPERTY()
 	TArray<FPerfomanceTestRequest> Data{};
+};
+
+UENUM(BlueprintType)
+enum class EPerfomancePointTransitionMode : uint8
+{
+	Instant = 0,
+	Smooth
+};
+
+USTRUCT(BlueprintType)
+struct FPerfomancePointTransitionData : public FTableRowBase
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Setup")
+	EPerfomancePointTransitionMode TransitionToPointMode;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Setup")
+	float TransitionDuration{ 2.0f };
+};
+
+USTRUCT()
+struct FPerfomanceCollectResult
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	TMap<FName, ADP_PerfomancePoint_Actor*> PointsCollection;
+	UPROPERTY()
+	TObjectPtr<const UDataTable> PathTable;
 };
 
 struct FPerfomanceTestTimer

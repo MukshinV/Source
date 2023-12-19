@@ -3,22 +3,38 @@
 
 #include "QA/Perfomance/DP_LevelPerfomanceRecorder_ACC.h"
 
-#include "DP_PerfomancePointCollection_Actor.h"
 #include "Kismet/GameplayStatics.h"
 #include "QA/Perfomance/PerfomanceTestTypes.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogPerfomanceRecorder, All, All)
 
-const FPerfomancePointData* FLevelPointsIterator::GetCurrent() const
+ADP_PerfomancePoint_Actor* FLevelPointsIterator::GetCurrent() const
 {
-	return CurrentRegionIndex >= static_cast<uint32>(LevelPoints.Num()) ? nullptr : &LevelPoints[CurrentRegionIndex];
+	if(CurrentRegionIndex >= static_cast<uint32>(LevelPoints.PointsCollection.Num())) return nullptr;
+
+	const FName currentRowName = RowNames[CurrentRegionIndex];
+	check(LevelPoints.PointsCollection.Contains(currentRowName))
+
+	return LevelPoints.PointsCollection[currentRowName];
 }
 
-const FPerfomancePointData* FLevelPointsIterator::PeekPrevious()
+ADP_PerfomancePoint_Actor* FLevelPointsIterator::Next()
+{
+	++CurrentRegionIndex; return GetCurrent();
+}
+
+ADP_PerfomancePoint_Actor* FLevelPointsIterator::PeekPrevious()
 {
 	if(CurrentRegionIndex == 0) return nullptr;
 
-	return &LevelPoints[CurrentRegionIndex - 1];
+	const FName previousRowName = RowNames[CurrentRegionIndex - 1];
+	return LevelPoints.PointsCollection[previousRowName];
+}
+
+void FLevelPointsIterator::SetNewPointsArray(const FPerfomanceCollectResult& _newArray)
+{
+	LevelPoints = _newArray;
+	RowNames = LevelPoints.PathTable->GetRowNames();
 }
 
 void FPerfomancePointTransitioner::MoveToInterpolatedTransform(AActor* _targetActorToMove) const
@@ -89,20 +105,20 @@ void UDP_LevelPerfomanceRecorder_ACC::PostInitProperties()
 
 void UDP_LevelPerfomanceRecorder_ACC::EnterToCurrentPoint() const
 {
-	const FPerfomancePointData* pointData = LevelPointsIterator.GetCurrent();
+	ADP_PerfomancePoint_Actor* currentPoint = LevelPointsIterator.GetCurrent();
 
-	PointRecorder->SetRecordingPoint(pointData->Point);
+	PointRecorder->SetRecordingPoint(currentPoint);
 	PointRecorder->EnterRecordingPoint();
 }
 
-void UDP_LevelPerfomanceRecorder_ACC::BeginPerfomanceRecording(const TArray<FPerfomancePointData>& _levelRegions)
+void UDP_LevelPerfomanceRecorder_ACC::BeginPerfomanceRecording(const FPerfomanceCollectResult& _levelRegions)
 {
 	check(GetWorld());
 	check(GetOwner());
 
 	const FString levelName = UGameplayStatics::GetCurrentLevelName(GetWorld());
 	
-	if(_levelRegions.Num() == 0)
+	if(_levelRegions.PointsCollection.Num() == 0)
 	{
 		UE_LOG(LogPerfomanceRecorder, Log, TEXT("Level with name %s has no perfomance points"), *levelName);
 		return;
@@ -145,7 +161,7 @@ void UDP_LevelPerfomanceRecorder_ACC::TickComponent(float _deltaTime, ELevelTick
 		return;
 	}
 
-	const ADP_PerfomancePoint_Actor* currentPoint = LevelPointsIterator.GetCurrent()->Point;
+	const ADP_PerfomancePoint_Actor* currentPoint = LevelPointsIterator.GetCurrent();
 	if(!PointRecorder->IsOnRecordingPoint(currentPoint))
 	{
 		if(PointTransitioner.IsNeedToCollectMetrics())
@@ -191,24 +207,23 @@ void UDP_LevelPerfomanceRecorder_ACC::StartMoveOwnerToNextPoint()
 	AActor* owner = GetOwner();
 	check(owner);
 
-	const FPerfomancePointData* fromPointData = LevelPointsIterator.PeekPrevious();
-	const FPerfomancePointData* toPointData = LevelPointsIterator.GetCurrent();
+	const ADP_PerfomancePoint_Actor* fromPoint = LevelPointsIterator.PeekPrevious();
+	const ADP_PerfomancePoint_Actor* toPoint = LevelPointsIterator.GetCurrent();
 
-	const ADP_PerfomancePoint_Actor* toPoint = toPointData->Point;
 	const FVector targetLocation = toPoint->GetActorLocation();
 	const FRotator targetRotation = toPoint->GetActorRotation();
 
-	if(!fromPointData)
+	if(!fromPoint)
 	{
 		owner->SetActorLocation(targetLocation);
 		owner->SetActorRotation(targetRotation);
 		return;
 	}
 
-	const ADP_PerfomancePoint_Actor* fromPoint = fromPointData->Point;
+	const FPerfomancePointTransitionData* toPointData = toPoint->GetPointData();
 	const EPerfomancePointTransitionMode transitionMode = toPointData->TransitionToPointMode;
 
-	PointTransitioner.StartTransition(fromPoint, toPoint, transitionMode == EPerfomancePointTransitionMode::Instant ? 0.0f : fromPointData->TransitionDuration);
+	PointTransitioner.StartTransition(fromPoint, toPoint, transitionMode == EPerfomancePointTransitionMode::Instant ? 0.0f : toPointData->TransitionDuration);
 	
 	if(transitionMode == EPerfomancePointTransitionMode::Instant)
 	{

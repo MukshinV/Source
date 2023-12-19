@@ -18,7 +18,9 @@ public:
 	ADP_PerfomancePoint_Actor();
 	virtual void BeginPlay() override;
 	
-	virtual FName GetRegionName() const { return FName{GetActorNameOrLabel()}; }
+	virtual FName GetRegionName() const;
+	FDataTableRowHandle GetRowHandle() const { return PointTableHandle; }
+	FPerfomancePointTransitionData* GetPointData() const;
 	float GetWaitAmount() const { return WaitAmountSeconds; }
 	float GetPassedTimeSinceRecordingStart() const { return Timer.TimePassed; }
 
@@ -35,6 +37,8 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Point Data")
 	float WaitAmountSeconds;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Point Data")
+	FDataTableRowHandle PointTableHandle;
 
 	virtual void Tick(float _deltaSeconds) override;
 	virtual void OnFinishedStageRecording() override;
