@@ -61,9 +61,9 @@ void UDP_PointPerfomanceRecorder::MoveToNextPointStage()
 	PointMetrics.Reset();
 	MetricsCollector.StartCollect();
 	
-	PointMetrics.RegionName = CurrentPoint->GetRegionName().ToString();
-	
 	CurrentPoint->OnStartedStageRecording();
+
+	PointMetrics.RegionName = CurrentPoint->GetRegionName().ToString();
 }
 
 void UDP_PointPerfomanceRecorder::UpdateTestMetrics(float _deltaTime)

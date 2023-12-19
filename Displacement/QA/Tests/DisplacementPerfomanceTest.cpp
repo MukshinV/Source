@@ -146,8 +146,9 @@ bool DisplacementPerfomanceTest::RunTest(const FString& _parameters)
 
 	if (!TestTrue("Map name should exist", parsedParams.Num() == 1)) return false;
 
-	const Displacement::Test::LevelScope level{parsedParams[0]};
+	AutomationOpenMap(parsedParams[0]);
 	
+	ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand{2.0f});
 	ADD_LATENT_AUTOMATION_COMMAND(FPerfomanceTestLatentCommand{});
 	
 	return true;
