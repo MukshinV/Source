@@ -3,18 +3,23 @@
 
 #include "QA/Perfomance/DP_LevelPerfomanceRecorder_ACC.h"
 
+#include "PerfomanceTestUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "QA/Perfomance/PerfomanceTestTypes.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogPerfomanceRecorder, All, All)
+
+FPerfomancePointTransitionData* FLevelPointsIterator::GetCurrentTransitionData() const
+{
+	if(CurrentRegionIndex >= static_cast<uint32>(LevelPoints.PointsCollection.Num())) return nullptr;
+	return LevelPoints.PathTable->FindRow<FPerfomancePointTransitionData>(RowNames[CurrentRegionIndex], "");
+}
 
 ADP_PerfomancePoint_Actor* FLevelPointsIterator::GetCurrent() const
 {
 	if(CurrentRegionIndex >= static_cast<uint32>(LevelPoints.PointsCollection.Num())) return nullptr;
 
 	const FName currentRowName = RowNames[CurrentRegionIndex];
-	check(LevelPoints.PointsCollection.Contains(currentRowName))
-
 	return LevelPoints.PointsCollection[currentRowName];
 }
 
@@ -60,17 +65,12 @@ const FPerfomanceTestRegionMetrics& FPerfomancePointTransitioner::CollectTransit
 
 void FPerfomancePointTransitioner::StartTransition(const ADP_PerfomancePoint_Actor* _fromPoint, const ADP_PerfomancePoint_Actor* _toPoint, float _transitionDuration)
 {
-	check(_fromPoint);
-	check(_toPoint);
-
-	Reset();
+	ResetTransitionData();
 
 	Timer.SetWaitDuration(_transitionDuration);
 	MetricsCollector.StartCollect();
 
-	const FString fromPointName = _fromPoint->GetRegionName().ToString();
-	const FString toPointName = _toPoint->GetRegionName().ToString();
-	TransitionMetrics.RegionName = FString::Printf(TEXT("Transition:%s--%s"), *fromPointName, *toPointName);
+	TransitionMetrics.RegionName = Displacement::Test::GetDiplayNameOfTransition(_fromPoint, _toPoint);
 
 	const FVector fromPosition = _fromPoint->GetActorLocation();
 	const FVector toPosition = _toPoint->GetActorLocation();
@@ -113,9 +113,6 @@ void UDP_LevelPerfomanceRecorder_ACC::EnterToCurrentPoint() const
 
 void UDP_LevelPerfomanceRecorder_ACC::BeginPerfomanceRecording(const FPerfomanceCollectResult& _levelRegions)
 {
-	check(GetWorld());
-	check(GetOwner());
-
 	const FString levelName = UGameplayStatics::GetCurrentLevelName(GetWorld());
 	
 	if(_levelRegions.PointsCollection.Num() == 0)
@@ -205,7 +202,6 @@ void UDP_LevelPerfomanceRecorder_ACC::EndPerfomanceRecording()
 void UDP_LevelPerfomanceRecorder_ACC::StartMoveOwnerToNextPoint()
 {
 	AActor* owner = GetOwner();
-	check(owner);
 
 	const ADP_PerfomancePoint_Actor* fromPoint = LevelPointsIterator.PeekPrevious();
 	const ADP_PerfomancePoint_Actor* toPoint = LevelPointsIterator.GetCurrent();
@@ -220,7 +216,7 @@ void UDP_LevelPerfomanceRecorder_ACC::StartMoveOwnerToNextPoint()
 		return;
 	}
 
-	const FPerfomancePointTransitionData* toPointData = toPoint->GetPointData();
+	const FPerfomancePointTransitionData* toPointData = LevelPointsIterator.GetCurrentTransitionData();
 	const EPerfomancePointTransitionMode transitionMode = toPointData->TransitionToPointMode;
 
 	PointTransitioner.StartTransition(fromPoint, toPoint, transitionMode == EPerfomancePointTransitionMode::Instant ? 0.0f : toPointData->TransitionDuration);

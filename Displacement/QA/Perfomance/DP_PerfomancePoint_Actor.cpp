@@ -17,14 +17,7 @@ void ADP_PerfomancePoint_Actor::BeginPlay()
 
 FName ADP_PerfomancePoint_Actor::GetRegionName() const
 {
-	return PointTableHandle.RowName;
-}
-
-FPerfomancePointTransitionData* ADP_PerfomancePoint_Actor::GetPointData() const
-{
-	if(!PointTableHandle.DataTable) return nullptr;
-
-	return PointTableHandle.GetRow<FPerfomancePointTransitionData>("");
+	return FName{GetActorNameOrLabel()};
 }
 
 void ADP_PerfomancePoint_Actor::OnStartedStageRecording()

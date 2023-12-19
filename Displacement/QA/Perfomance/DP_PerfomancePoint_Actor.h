@@ -19,13 +19,12 @@ public:
 	virtual void BeginPlay() override;
 	
 	virtual FName GetRegionName() const;
-	FDataTableRowHandle GetRowHandle() const { return PointTableHandle; }
-	FPerfomancePointTransitionData* GetPointData() const;
 	float GetWaitAmount() const { return WaitAmountSeconds; }
 	float GetPassedTimeSinceRecordingStart() const { return Timer.TimePassed; }
 
 	virtual void MoveToNextStage() {}
-	
+
+	virtual bool IsValidForTesting() const { return true; }
 	virtual bool IsRecording() const { return Timer.IsRunning(); }
 	virtual bool CanMoveToNextPoint() const override { return !IsRecording(); }
 	virtual bool CanMoveToNextStage() const override { return false; }
@@ -37,8 +36,6 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Point Data")
 	float WaitAmountSeconds;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Point Data")
-	FDataTableRowHandle PointTableHandle;
 
 	virtual void Tick(float _deltaSeconds) override;
 	virtual void OnFinishedStageRecording() override;

@@ -5,15 +5,11 @@
 
 void UDP_PointPerfomanceRecorder::SetRecordingPoint(ADP_PerfomancePoint_Actor* _pointToRecord)
 {
-	check(_pointToRecord);
-	
 	CurrentPoint = _pointToRecord;
 }
 
 void UDP_PointPerfomanceRecorder::EnterRecordingPoint()
 {
-	check(CurrentPoint);
-	
 	PointMetrics.Reset();
 	MetricsCollector.StartCollect();
 	
@@ -25,8 +21,6 @@ void UDP_PointPerfomanceRecorder::EnterRecordingPoint()
 
 void UDP_PointPerfomanceRecorder::ExitRecordingPoint()
 {
-	check(CurrentPoint)
-	
 	if(!CurrentPoint->IsRecording()) return;
 
 	CurrentPoint->OnRecorderExit();
@@ -40,22 +34,16 @@ void FFPSMetricsCollector::Tick(float _deltaTime)
 
 bool UDP_PointPerfomanceRecorder::IsRegionRecording() const
 {
-	check(CurrentPoint)
-
 	return CurrentPoint->IsRecording();
 }
 
 bool UDP_PointPerfomanceRecorder::CanMoveToNextStage() const
 {
-	check(CurrentPoint)
-
 	return CurrentPoint->CanMoveToNextStage();
 }
 
 void UDP_PointPerfomanceRecorder::MoveToNextPointStage()
 {
-	check(CurrentPoint)
-
 	CurrentPoint->MoveToNextStage();
 
 	PointMetrics.Reset();

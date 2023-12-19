@@ -20,6 +20,7 @@ struct FLevelPointsIterator
 	uint32 CurrentRegionIndex;
 
 	bool PassedAll() const { return CurrentRegionIndex == LevelPoints.PointsCollection.Num();}
+	FPerfomancePointTransitionData* GetCurrentTransitionData() const;
 	ADP_PerfomancePoint_Actor* GetCurrent() const;
 	ADP_PerfomancePoint_Actor* Next();
 	ADP_PerfomancePoint_Actor* PeekPrevious();
@@ -47,7 +48,7 @@ private:
 	FPerfomanceTestTimer Timer;
 
 	void SetInterpolationValue(float _interpolationValue); 
-	void Reset() { PositionInterpolator.Reset(); RotationInterpolator.Reset(); Timer.TimePassed = 0.0f; }
+	void ResetTransitionData() { PositionInterpolator.ResetInterpolatorValue(); RotationInterpolator.ResetInterpolatorValue(); Timer.TimePassed = 0.0f; }
 };
 
 

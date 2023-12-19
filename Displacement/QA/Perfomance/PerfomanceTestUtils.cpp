@@ -2,16 +2,10 @@
 
 
 #include "QA/Perfomance/PerfomanceTestUtils.h"
+
 #include "JsonObjectConverter.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogPerfomanceTestSerialization, All, All)
-
-namespace
-{
-	const FString PerfomanceTestReportsDirectory = FPaths::ProjectDir() + TEXT("/QA/PerfomanceReports/");
-	const FString PerfomanceTestsList = FPaths::ProjectDir() + TEXT("/QA/Data/PerfomanceMaps.json");
-	const FString OutputFileExtension = TEXT(".json");
-}
 
 namespace Displacement
 {
@@ -46,6 +40,13 @@ namespace Displacement
 			}
 
 			return FJsonObjectConverter::JsonObjectToUStruct(MainJsonObject.ToSharedRef(), &_request, 0, 0);
+		}
+
+		FString GetDiplayNameOfTransition(const ADP_PerfomancePoint_Actor* _fromPoint, const ADP_PerfomancePoint_Actor* _toPoint)
+		{
+			const FString fromPointName = _fromPoint->GetRegionName().ToString();
+			const FString toPointName = _toPoint->GetRegionName().ToString();
+			return FString::Printf(TEXT("Transition:%s--%s"), *fromPointName, *toPointName);
 		}
 	}
 }

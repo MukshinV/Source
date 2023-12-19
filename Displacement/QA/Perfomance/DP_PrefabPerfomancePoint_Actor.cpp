@@ -11,14 +11,6 @@ ADP_PrefabPerfomancePoint_Actor::ADP_PrefabPerfomancePoint_Actor()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void ADP_PrefabPerfomancePoint_Actor::BeginPlay()
-{
-	Super::BeginPlay();
-
-	check(PrefabTable);
-	check(PrefabSpawnPoint);
-}
-
 FName ADP_PrefabPerfomancePoint_Actor::GetRegionName() const
 {
 	if(IsRecording())
@@ -27,6 +19,11 @@ FName ADP_PrefabPerfomancePoint_Actor::GetRegionName() const
 	}
 
 	return Super::GetRegionName();
+}
+
+bool ADP_PrefabPerfomancePoint_Actor::IsValidForTesting() const
+{
+	return PrefabTable && PrefabSpawnPoint;
 }
 
 bool ADP_PrefabPerfomancePoint_Actor::IsRecording() const
@@ -55,8 +52,6 @@ void ADP_PrefabPerfomancePoint_Actor::OnStartedStageRecording()
 
 	const UWorld* world = GetWorld();
 	const TestPrefabUnit_F* unit = PrefabIterator.GetPrefab(PrefabTable);
-	check(unit);
-
 	const FTransform& spawnTransform = PrefabSpawnPoint->GetActorTransform();
 	
 	CurrentPrefabActor = UPrefabricatorBlueprintLibrary::SpawnPrefab(world, unit->PrefabUnit, spawnTransform, 0);

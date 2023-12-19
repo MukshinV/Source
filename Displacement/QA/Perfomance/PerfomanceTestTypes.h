@@ -49,9 +49,9 @@ struct FPerfomanceTestRequest
 	UPROPERTY()
 	FString Name{};
 	UPROPERTY()
-	FString Path{};
+	FString MapPath{};
 	UPROPERTY()
-	FString PathTable{};
+	FString TestTablePath{};
 	UPROPERTY()
 	bool bIsEnabled{};
 };
@@ -139,11 +139,11 @@ class FLinearInterpolator
 {
 public:
 	FLinearInterpolator() = default;
-	bool IsFinished() const { return InterpolationValue >= 1.0f; }
+	bool IsFinished() const { return FMath::IsNearlyEqual(InterpolationValue, 1.0f, 0.001f) ; }
 	void SetData(const T& _first, const T& _second) { First = _first; Second = _second; }
 	T GetInterpolatedData() const { return FMath::Lerp(First, Second, InterpolationValue); }
-	void SetInterpolationValue(float _interpolationValue) { InterpolationValue = FMath::Min(1.0f, _interpolationValue);}
-	void Reset() { InterpolationValue = 0.0f; }
+	void SetInterpolationValue(float _interpolationValue) { InterpolationValue = FMath::Clamp(_interpolationValue, 0.0f, 1.0f );}
+	void ResetInterpolatorValue() { InterpolationValue = 0.0f; }
 private:
 	T First;
 	T Second;
