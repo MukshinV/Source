@@ -25,7 +25,7 @@ class DISPLACEMENT_API ADP_PrefabPerfomancePoint_Actor : public ADP_PerfomancePo
 public:
 	ADP_PrefabPerfomancePoint_Actor();
 	virtual void BeginPlay() override;
-	virtual FName GetRegionName() const override { return PrefabIterator.GetCurrentRow(); }
+	virtual FName GetRegionName() const override;
 
 	virtual bool IsRecording() const override;
 	virtual bool CanMoveToNextStage() const override;

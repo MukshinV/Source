@@ -19,6 +19,16 @@ void ADP_PrefabPerfomancePoint_Actor::BeginPlay()
 	check(PrefabSpawnPoint);
 }
 
+FName ADP_PrefabPerfomancePoint_Actor::GetRegionName() const
+{
+	if(IsRecording())
+	{
+		return PrefabIterator.GetCurrentRow();
+	}
+
+	return Super::GetRegionName();
+}
+
 bool ADP_PrefabPerfomancePoint_Actor::IsRecording() const
 {
 	return Super::IsRecording() && CurrentPrefabActor;
