@@ -15,9 +15,14 @@ void ADP_PerfomancePoint_Actor::BeginPlay()
 	PrimaryActorTick.SetTickFunctionEnable(false);
 }
 
+FName ADP_PerfomancePoint_Actor::GetRegionName() const
+{
+	return FName{GetActorNameOrLabel()};
+}
+
 void ADP_PerfomancePoint_Actor::OnStartedStageRecording()
 {
-	UE_LOG(LogPerfomancePoint, Log, TEXT("Started recording perfomance point stage: %s"), *GetRegionName().ToString())
+	UE_LOG(LogPerfomancePoint, Log, TEXT("Started recording perfomance point stage: %s"), *GetRegionName().ToString());
 	
 	Timer.Reset();
 	Timer.SetWaitDuration(WaitAmountSeconds);

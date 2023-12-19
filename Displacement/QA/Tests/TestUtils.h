@@ -11,6 +11,11 @@ namespace Displacement
 	{
 		UWorld* GetTestWorld();
 
+		FORCEINLINE UDataTable* LoadTableFromPath(const FString& _path)
+		{
+			return Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *_path));
+		}
+
 		class LevelScope
 		{
 		public:

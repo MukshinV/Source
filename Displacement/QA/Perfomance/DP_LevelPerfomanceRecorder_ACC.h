@@ -14,30 +14,55 @@ struct FLevelPointsIterator
 {
 	GENERATED_BODY()
 
-	using PerfPointsArray_T = TArray<TObjectPtr<ADP_PerfomancePoint_Actor>>;
-	
 	UPROPERTY()
-	TArray<TObjectPtr<ADP_PerfomancePoint_Actor>> LevelPoints;
+	FPerfomanceCollectResult LevelPoints;
+	TArray<FName> RowNames;
 	uint32 CurrentRegionIndex;
 
-	bool PassedAll() const { return CurrentRegionIndex == LevelPoints.Num();}
-	ADP_PerfomancePoint_Actor* GetCurrent() const { return CurrentRegionIndex >= static_cast<uint32>(LevelPoints.Num()) ? nullptr : LevelPoints[CurrentRegionIndex]; }
-	ADP_PerfomancePoint_Actor* Next() { ++CurrentRegionIndex; return GetCurrent(); }
-	void SetNewPointsArray(const PerfPointsArray_T& _newArray) { LevelPoints = _newArray;}
+	bool PassedAll() const { return CurrentRegionIndex == LevelPoints.PointsCollection.Num();}
+	FPerfomancePointTransitionData* GetCurrentTransitionData() const;
+	ADP_PerfomancePoint_Actor* GetCurrent() const;
+	ADP_PerfomancePoint_Actor* Next();
+	ADP_PerfomancePoint_Actor* PeekPrevious();
+	void SetNewPointsArray(const FPerfomanceCollectResult& _newArray);
 	void ResetPointer() { CurrentRegionIndex = 0u; }
 };
+
+class FPerfomancePointTransitioner
+{
+public:
+	FPerfomancePointTransitioner() = default;
+	bool IsInTransition() const { return !PositionInterpolator.IsFinished() || !RotationInterpolator.IsFinished(); }
+	bool IsNeedToCollectMetrics() const { return Timer.WaitDurationSeconds > 0.0f; }
+	void StartTransition(const ADP_PerfomancePoint_Actor* _fromPoint, const ADP_PerfomancePoint_Actor* _toPoint, float _transitionDuration);
+	void Tick(float _deltaTime);
+	void MoveToInterpolatedTransform(AActor* _targetActorToMove) const;
+	void SetMaxInterpolationValue() { SetInterpolationValue(1.0f); }
+	const FPerfomanceTestRegionMetrics& CollectTransitionMetrics();
+private:
+	FPositionInterpolator PositionInterpolator;
+	FRotationInterpolator RotationInterpolator;
+	
+	FFPSMetricsCollector MetricsCollector;
+	FPerfomanceTestRegionMetrics TransitionMetrics;
+	FPerfomanceTestTimer Timer;
+
+	void SetInterpolationValue(float _interpolationValue); 
+	void ResetTransitionData() { PositionInterpolator.ResetInterpolatorValue(); RotationInterpolator.ResetInterpolatorValue(); Timer.TimePassed = 0.0f; }
+};
+
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DISPLACEMENT_API UDP_LevelPerfomanceRecorder_ACC : public UActorComponent
 {
 	GENERATED_BODY()
 
-	DECLARE_EVENT_OneParam(UDP_LevelPerfomanceRecorder_ACC, FFinishedRecordingEvent, FPerfomanceTestLevelData)
+	DECLARE_EVENT_OneParam(UDP_LevelPerfomanceRecorder_ACC, FFinishedRecordingEvent, FPerfomanceTestLevelMetrics)
 public:
 	UDP_LevelPerfomanceRecorder_ACC();
 
 	virtual void PostInitProperties() override;
-	void BeginPerfomanceRecording(const TArray<TObjectPtr<ADP_PerfomancePoint_Actor>>& _levelRegions);
+	void BeginPerfomanceRecording(const FPerfomanceCollectResult& _levelRegions);
 	FFinishedRecordingEvent& OnFinishedRecording() { return FinishedRecordingEvent; }
 	
 protected:
@@ -49,10 +74,13 @@ private:
 	TObjectPtr<UDP_PointPerfomanceRecorder> PointRecorder;
 	
 	FFinishedRecordingEvent FinishedRecordingEvent;
-	FPerfomanceTestLevelData LevelTestResult;
+	FPerfomanceTestLevelMetrics LevelTestResult;
 	FLevelPointsIterator LevelPointsIterator;
+	FPerfomancePointTransitioner PointTransitioner;
 
-	void MoveOwnerToNextRegion() const;
+	void EnterToCurrentPoint() const;
+	
+	void StartMoveOwnerToNextPoint();
 	void CollectPointRecordingResults();
 	bool TryToSwitchToNextPoint();
 };

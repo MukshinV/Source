@@ -16,6 +16,7 @@ class DISPLACEMENT_API IDP_PerfomancePointInterface
 {
 	GENERATED_BODY()
 public:
+	virtual bool IsValidForTesting() const = 0;
 	virtual bool CanMoveToNextPoint() const = 0;
 	virtual bool CanMoveToNextStage() const = 0;
 	

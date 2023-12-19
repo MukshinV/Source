@@ -3,11 +3,93 @@
 
 #include "QA/Perfomance/DP_LevelPerfomanceRecorder_ACC.h"
 
+#include "PerfomanceTestUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "QA/Perfomance/PerfomanceTestTypes.h"
-#include "QA/Perfomance/PerfomanceTestUtils.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogPerfomanceRecorder, All, All)
+
+FPerfomancePointTransitionData* FLevelPointsIterator::GetCurrentTransitionData() const
+{
+	if(CurrentRegionIndex >= static_cast<uint32>(LevelPoints.PointsCollection.Num())) return nullptr;
+	return LevelPoints.PathTable->FindRow<FPerfomancePointTransitionData>(RowNames[CurrentRegionIndex], "");
+}
+
+ADP_PerfomancePoint_Actor* FLevelPointsIterator::GetCurrent() const
+{
+	if(CurrentRegionIndex >= static_cast<uint32>(LevelPoints.PointsCollection.Num())) return nullptr;
+
+	const FName currentRowName = RowNames[CurrentRegionIndex];
+	return LevelPoints.PointsCollection[currentRowName];
+}
+
+ADP_PerfomancePoint_Actor* FLevelPointsIterator::Next()
+{
+	++CurrentRegionIndex; return GetCurrent();
+}
+
+ADP_PerfomancePoint_Actor* FLevelPointsIterator::PeekPrevious()
+{
+	if(CurrentRegionIndex == 0) return nullptr;
+
+	const FName previousRowName = RowNames[CurrentRegionIndex - 1];
+	return LevelPoints.PointsCollection[previousRowName];
+}
+
+void FLevelPointsIterator::SetNewPointsArray(const FPerfomanceCollectResult& _newArray)
+{
+	LevelPoints = _newArray;
+	RowNames = LevelPoints.PathTable->GetRowNames();
+}
+
+void FPerfomancePointTransitioner::MoveToInterpolatedTransform(AActor* _targetActorToMove) const
+{
+	check(_targetActorToMove);
+	
+	_targetActorToMove->SetActorLocation(PositionInterpolator.GetInterpolatedData());
+	_targetActorToMove->SetActorRotation(RotationInterpolator.GetInterpolatedData().Quaternion());
+}
+
+void FPerfomancePointTransitioner::SetInterpolationValue(float _interpolationValue)
+{
+	PositionInterpolator.SetInterpolationValue(_interpolationValue);
+	RotationInterpolator.SetInterpolationValue(_interpolationValue);
+}
+
+const FPerfomanceTestRegionMetrics& FPerfomancePointTransitioner::CollectTransitionMetrics()
+{
+	TransitionMetrics.TicksPerSecond = MetricsCollector.GetTickAmount() / Timer.WaitDurationSeconds;
+	TransitionMetrics.MaxFPSDelta = MetricsCollector.GetMaxFPSDelta();
+	return TransitionMetrics;
+}
+
+void FPerfomancePointTransitioner::StartTransition(const ADP_PerfomancePoint_Actor* _fromPoint, const ADP_PerfomancePoint_Actor* _toPoint, float _transitionDuration)
+{
+	ResetTransitionData();
+
+	Timer.SetWaitDuration(_transitionDuration);
+	MetricsCollector.StartCollect();
+
+	TransitionMetrics.RegionName = Displacement::Test::GetDiplayNameOfTransition(_fromPoint, _toPoint);
+
+	const FVector fromPosition = _fromPoint->GetActorLocation();
+	const FVector toPosition = _toPoint->GetActorLocation();
+
+	PositionInterpolator.SetData(fromPosition, toPosition);
+
+	const FRotator fromRotation = _fromPoint->GetActorRotation();
+	const FRotator toRotation = _toPoint->GetActorRotation();
+
+	RotationInterpolator.SetData(fromRotation, toRotation);
+}
+
+void FPerfomancePointTransitioner::Tick(float _deltaTime)
+{
+	MetricsCollector.Tick(_deltaTime);
+
+	Timer.AddDeltaTime(_deltaTime);
+	SetInterpolationValue(Timer.GetRatio());
+}
 
 UDP_LevelPerfomanceRecorder_ACC::UDP_LevelPerfomanceRecorder_ACC()
 {
@@ -18,18 +100,24 @@ void UDP_LevelPerfomanceRecorder_ACC::PostInitProperties()
 {
 	Super::PostInitProperties();
 	PointRecorder = NewObject<UDP_PointPerfomanceRecorder>(this);
+	SetComponentTickEnabled(false);
 }
 
-void UDP_LevelPerfomanceRecorder_ACC::BeginPerfomanceRecording(const TArray<TObjectPtr<ADP_PerfomancePoint_Actor>>& _levelRegions)
+void UDP_LevelPerfomanceRecorder_ACC::EnterToCurrentPoint() const
 {
-	check(GetWorld())
-	check(GetOwner())
+	ADP_PerfomancePoint_Actor* currentPoint = LevelPointsIterator.GetCurrent();
 
+	PointRecorder->SetRecordingPoint(currentPoint);
+	PointRecorder->EnterRecordingPoint();
+}
+
+void UDP_LevelPerfomanceRecorder_ACC::BeginPerfomanceRecording(const FPerfomanceCollectResult& _levelRegions)
+{
 	const FString levelName = UGameplayStatics::GetCurrentLevelName(GetWorld());
 	
-	if(_levelRegions.Num() == 0)
+	if(_levelRegions.PointsCollection.Num() == 0)
 	{
-		UE_LOG(LogPerfomanceRecorder, Log, TEXT("Level with name %s has no perfomance points"), *levelName)
+		UE_LOG(LogPerfomanceRecorder, Log, TEXT("Level with name %s has no perfomance points"), *levelName);
 		return;
 	}
 
@@ -38,12 +126,10 @@ void UDP_LevelPerfomanceRecorder_ACC::BeginPerfomanceRecording(const TArray<TObj
 	LevelPointsIterator.ResetPointer();
 	LevelPointsIterator.SetNewPointsArray(_levelRegions);
 
-	MoveOwnerToNextRegion();
-	ADP_PerfomancePoint_Actor* point = LevelPointsIterator.GetCurrent();
-	PointRecorder->SetRecordingPoint(point);
-	PointRecorder->EnterRecordingPoint();
-
-	UE_LOG(LogPerfomanceRecorder, Log, TEXT("Started recording"))
+	StartMoveOwnerToNextPoint();
+	SetComponentTickEnabled(true);
+	
+	UE_LOG(LogPerfomanceRecorder, Log, TEXT("Started recording"));
 }
 
 void UDP_LevelPerfomanceRecorder_ACC::CollectPointRecordingResults()
@@ -57,11 +143,7 @@ bool UDP_LevelPerfomanceRecorder_ACC::TryToSwitchToNextPoint()
 	
 	if(!LevelPointsIterator.Next()) return false;
 
-	MoveOwnerToNextRegion();
-	ADP_PerfomancePoint_Actor* point = LevelPointsIterator.GetCurrent();
-	PointRecorder->SetRecordingPoint(point);
-	PointRecorder->EnterRecordingPoint();
-	
+	StartMoveOwnerToNextPoint();
 	return true;
 }
 
@@ -69,7 +151,23 @@ void UDP_LevelPerfomanceRecorder_ACC::TickComponent(float _deltaTime, ELevelTick
 {
 	Super::TickComponent(_deltaTime, _tickType, _thisTickFunction);
 
-	if(LevelPointsIterator.PassedAll()) return;
+	if(PointTransitioner.IsInTransition())
+	{
+		PointTransitioner.Tick(_deltaTime);
+		PointTransitioner.MoveToInterpolatedTransform(GetOwner());
+		return;
+	}
+
+	const ADP_PerfomancePoint_Actor* currentPoint = LevelPointsIterator.GetCurrent();
+	if(!PointRecorder->IsOnRecordingPoint(currentPoint))
+	{
+		if(PointTransitioner.IsNeedToCollectMetrics())
+		{
+			LevelTestResult.RegionDatas.Add(PointTransitioner.CollectTransitionMetrics()); 
+		}
+		
+		EnterToCurrentPoint();
+	}
 	
 	if(PointRecorder->IsRegionRecording())
 	{
@@ -92,24 +190,40 @@ void UDP_LevelPerfomanceRecorder_ACC::TickComponent(float _deltaTime, ELevelTick
 
 void UDP_LevelPerfomanceRecorder_ACC::EndPerfomanceRecording()
 {
+	SetComponentTickEnabled(false);
+	
 	LevelTestResult.PerfomanceTestDate = FDateTime::Now().ToString();
 	
-	UE_LOG(LogPerfomanceRecorder, Log, TEXT("Stopped recording"))
+	UE_LOG(LogPerfomanceRecorder, Log, TEXT("Stopped recording"));
 
 	FinishedRecordingEvent.Broadcast(LevelTestResult);
 }
 
-void UDP_LevelPerfomanceRecorder_ACC::MoveOwnerToNextRegion() const
+void UDP_LevelPerfomanceRecorder_ACC::StartMoveOwnerToNextPoint()
 {
 	AActor* owner = GetOwner();
-	check(owner)
+
+	const ADP_PerfomancePoint_Actor* fromPoint = LevelPointsIterator.PeekPrevious();
+	const ADP_PerfomancePoint_Actor* toPoint = LevelPointsIterator.GetCurrent();
+
+	const FVector targetLocation = toPoint->GetActorLocation();
+	const FRotator targetRotation = toPoint->GetActorRotation();
+
+	if(!fromPoint)
+	{
+		owner->SetActorLocation(targetLocation);
+		owner->SetActorRotation(targetRotation);
+		return;
+	}
+
+	const FPerfomancePointTransitionData* toPointData = LevelPointsIterator.GetCurrentTransitionData();
+	const EPerfomancePointTransitionMode transitionMode = toPointData->TransitionToPointMode;
+
+	PointTransitioner.StartTransition(fromPoint, toPoint, transitionMode == EPerfomancePointTransitionMode::Instant ? 0.0f : toPointData->TransitionDuration);
 	
-	const ADP_PerfomancePoint_Actor* targetPoint = LevelPointsIterator.GetCurrent();
-	const FVector targetLocation = targetPoint->GetActorLocation();
-	const FRotator targetRotation = targetPoint->GetActorRotation();
-
-	//@TODO: add smooth transition
-
-	owner->SetActorLocation(targetLocation);
-	owner->SetActorRotation(targetRotation);
+	if(transitionMode == EPerfomancePointTransitionMode::Instant)
+	{
+		PointTransitioner.SetMaxInterpolationValue();
+		PointTransitioner.MoveToInterpolatedTransform(owner);
+	}
 }
