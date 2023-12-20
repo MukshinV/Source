@@ -23,7 +23,7 @@ FName ADP_PrefabPerfomancePoint_Actor::GetRegionName() const
 
 bool ADP_PrefabPerfomancePoint_Actor::IsValidForTesting() const
 {
-	return PrefabTable && PrefabSpawnPoint;
+	return PrefabTable && PrefabSpawnPoint && Super::IsValidForTesting();
 }
 
 bool ADP_PrefabPerfomancePoint_Actor::IsRecording() const

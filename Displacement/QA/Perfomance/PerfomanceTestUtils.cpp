@@ -16,7 +16,15 @@ namespace Displacement
 			FString serializedData{};
 			if(!FJsonObjectConverter::UStructToJsonObjectString(_testResult, serializedData)) return false;
 
-			const FString fullPath{ PerfomanceTestReportsDirectory + FDateTime::Now().GetDate().ToString() + "/" + _fileName + OutputFileExtension };
+			FString targetRootDirectory{};
+
+#if WITH_EDITOR
+			targetRootDirectory = EditorPerfomanceTestReportsDirectory;
+#else
+			targetRootDirectory = BuildPerfomanceTestReportsDirectory;
+#endif
+			
+			const FString fullPath{ targetRootDirectory + FDateTime::Now().GetDate().ToString() + "/" + _fileName + OutputFileExtension };
 			FFileHelper::SaveStringToFile(serializedData, *fullPath);
 			
 			return true;
@@ -25,7 +33,15 @@ namespace Displacement
 		bool ReadPerfomanceTestList(FPerfomanceTestRequestCollection& _request)
 		{
 			FString stringFile{};
-			if (!FFileHelper::LoadFileToString(stringFile, *PerfomanceTestsList))
+			FString targetPath{};
+
+#if WITH_EDITOR
+			targetPath = EditorPerfomanceTestsList;
+#else
+			targetPath = BuildPerfomanceTestsList;
+#endif
+			
+			if (!FFileHelper::LoadFileToString(stringFile, *targetPath))
 			{
 				UE_LOG(LogPerfomanceTestSerialization, Error, TEXT("File opening error"));
 				return false;

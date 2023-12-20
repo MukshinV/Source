@@ -51,8 +51,6 @@ struct FPerfomanceTestRequest
 	UPROPERTY()
 	FString MapPath{};
 	UPROPERTY()
-	FString TestTablePath{};
-	UPROPERTY()
 	bool bIsEnabled{};
 };
 

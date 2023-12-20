@@ -2,9 +2,9 @@
 
 #include "EngineUtils.h"
 #include "Misc/AutomationTest.h"
-#include "TestConstants.h"
 #include "TestUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "QA/Perfomance/DP_PerfomanceTestConfig_Actor.h"
 #include "Kismet/GameplayStatics.h"
 #include "QA/Perfomance/DP_LevelPerfomanceRecorder_ACC.h"
 #include "QA/Perfomance/DP_PerfomancePoint_Actor.h"
@@ -23,16 +23,14 @@ namespace
 		using LevelRecorder_ACC = UDP_LevelPerfomanceRecorder_ACC;
 		
 	public:
-		FPerfomanceTestLatentCommand(const FString& _tablePath) :
+		FPerfomanceTestLatentCommand() :
 			LevelRecorder(),
-			TablePath(_tablePath),
 			bIsInitialized(false),
 			bIsTestFinished(false)
 		{}
 		
 	private:
 		LevelRecorder_ACC* LevelRecorder;
-		FString TablePath;
 		bool bIsInitialized;
 		bool bIsTestFinished;
 
@@ -85,7 +83,17 @@ namespace
 
 		FPerfomanceCollectResult collectResult{};
 
-		collectResult.PathTable = Displacement::Test::LoadTableFromPath(TablePath);
+		AActor* foundTableActor = UGameplayStatics::GetActorOfClass(world, ADP_PerfomanceTestConfig_Actor::StaticClass());
+		const ADP_PerfomanceTestConfig_Actor* configKeeper = Cast<ADP_PerfomanceTestConfig_Actor>(foundTableActor);
+
+		if(!configKeeper)
+		{
+			UE_LOG(LogPerfomanceTest, Error, TEXT("Can't find table keeper"));
+			bIsTestFinished = true;
+			return;
+		}
+		
+		collectResult.PathTable = configKeeper->GetDataTable();
 
 		if(!collectResult.PathTable)
 		{
@@ -106,8 +114,14 @@ namespace
 			return;
 		}
 
-		APawn* testPawn = Displacement::Test::CreateBlueprint<APawn>(world, Displacement::Test::DisplacementPerfomancePawn);
-		check(testPawn);
+		APawn* testPawn = world->SpawnActor<APawn>(configKeeper->GetTestPawnSubclass());
+
+		if(!testPawn)
+		{
+			UE_LOG(LogPerfomanceTest, Error, TEXT("Can't create test pawn"));
+			bIsTestFinished = true;
+			return;
+		}
 	
 		SetupActors(world, testPawn);
 		
@@ -201,7 +215,7 @@ void DisplacementPerfomanceTest::GetTests(TArray<FString>& _outBeautifiedNames, 
 		FPerfomanceTestRequest& request = perfomanceTestRequest.Data[enabledTestIndex];
 
 		_outBeautifiedNames.Add(request.Name);
-		_outTestCommands.Add(FString::Printf(TEXT("%s,%s"), *request.MapPath, *request.TestTablePath));
+		_outTestCommands.Add(*request.MapPath);
 	}
 }
 
@@ -210,12 +224,12 @@ bool DisplacementPerfomanceTest::RunTest(const FString& _parameters)
 	TArray<FString> parsedParams{};
 	_parameters.ParseIntoArray(parsedParams, TEXT(","));
 
-	if (!TestTrue("Map name and test table should exist", parsedParams.Num() == 2)) return false;
+	if (!TestTrue("Map name should exist", parsedParams.Num() == 1)) return false;
 
 	AutomationOpenMap(parsedParams[0]);
 	
 	ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand{2.0f});
-	ADD_LATENT_AUTOMATION_COMMAND(FPerfomanceTestLatentCommand{parsedParams[1]});
+	ADD_LATENT_AUTOMATION_COMMAND(FPerfomanceTestLatentCommand{});
 	
 	return true;
 }

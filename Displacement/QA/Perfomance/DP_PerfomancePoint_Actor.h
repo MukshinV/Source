@@ -24,7 +24,7 @@ public:
 
 	virtual void MoveToNextStage() {}
 
-	virtual bool IsValidForTesting() const { return true; }
+	virtual bool IsValidForTesting() const override { return true; }
 	virtual bool IsRecording() const { return Timer.IsRunning(); }
 	virtual bool CanMoveToNextPoint() const override { return !IsRecording(); }
 	virtual bool CanMoveToNextStage() const override { return false; }
