@@ -24,7 +24,7 @@ namespace Displacement
 			targetRootDirectory = BuildPerfomanceTestReportsDirectory;
 #endif
 			
-			const FString fullPath{ targetRootDirectory + FDateTime::Now().GetDate().ToString() + "/" + _fileName + OutputFileExtension };
+			const FString fullPath{ targetRootDirectory + "/" + _fileName + "/" + _fileName + FDateTime::Now().ToString() + OutputFileExtension };
 			FFileHelper::SaveStringToFile(serializedData, *fullPath);
 			
 			return true;

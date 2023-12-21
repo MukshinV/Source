@@ -19,12 +19,15 @@ struct FPerfomanceTestRegionMetrics
 	float TicksPerSecond{};
 	UPROPERTY()
 	float MaxFPSDelta{};
-
+	UPROPERTY()
+	float FrameMilliseconds{};
+	
 	void Reset()
 	{
 		RegionName.Reset();
 		MaxFPSDelta = 0.0f;
 		TicksPerSecond = 0.0f;
+		FrameMilliseconds = 0.0f;
 	}
 };
 
@@ -124,6 +127,7 @@ class FFPSMetricsCollector
 public:
 	FFPSMetricsCollector() = default;
 	float GetMaxFPSDelta() const { return MaxFPSDelta; }
+	float GetFrameMilliseconds(float _passedSeconds) const;
 	void StartCollect() { TickCounter.Reset(); MaxFPSDelta = 0.0f; }
 	void Tick(float _deltaTime);
 	uint32 GetTickAmount() const { return TickCounter.GetTicksAmount(); }

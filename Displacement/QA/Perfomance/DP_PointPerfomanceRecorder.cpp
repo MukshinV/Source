@@ -62,6 +62,7 @@ void UDP_PointPerfomanceRecorder::UpdateTestMetrics(float _deltaTime)
 FPerfomanceTestRegionMetrics UDP_PointPerfomanceRecorder::CollectTestMetrics()
 {
 	PointMetrics.TicksPerSecond = MetricsCollector.GetTickAmount() / CurrentPoint->GetWaitAmount();
+	PointMetrics.FrameMilliseconds = MetricsCollector.GetFrameMilliseconds(CurrentPoint->GetWaitAmount());
 	PointMetrics.MaxFPSDelta = MetricsCollector.GetMaxFPSDelta();
 	
 	return PointMetrics;
