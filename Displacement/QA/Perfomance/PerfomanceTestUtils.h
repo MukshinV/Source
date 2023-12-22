@@ -10,12 +10,14 @@ namespace Displacement
 {
 	namespace Test
 	{
-		const FString BuildPerfomanceTestReportsDirectory = FPaths::LaunchDir() + TEXT("/QA/PerfomanceReports/");
-		const FString BuildPerfomanceTestsList = FPaths::LaunchDir() + TEXT("/QA/Data/PerfomanceMaps.json");
+#if WITH_EDITOR
+		const FString DisplacementRepositoryDir = FPaths::ProjectDir() + TEXT("/../");
+#else
+		const FString DisplacementRepositoryDir = FPaths::LaunchDir() + TEXT("/../../");
+#endif
 
-		const FString EditorPerfomanceTestReportsDirectory = FPaths::ProjectDir() + TEXT("/QA/PerfomanceReports/");
-		const FString EditorPerfomanceTestsList = FPaths::ProjectDir() + TEXT("/QA/Data/PerfomanceMaps.json");
-		
+		const FString PerfomanceTestReportsDirectory = DisplacementRepositoryDir + TEXT("/QA/Jsons/");
+		const FString PerfomanceTestsList = DisplacementRepositoryDir + TEXT("/QA/Data/PerfomanceMaps.json");
 		const FString OutputFileExtension = TEXT(".json");
 		
 		FORCEINLINE float SecondsToMilliseconds(float _timeSeconds) { return _timeSeconds * 1000.0f; }
