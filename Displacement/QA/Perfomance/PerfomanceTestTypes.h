@@ -7,19 +7,40 @@
 
 class ADP_PerfomancePoint_Actor;
 
+UENUM()
+enum class EMetricType : uint8
+{
+	FrameMilliseconds = 0,
+	MaxFPSDelta,
+	TicksPerSecond,
+	COUNT
+};
+
+USTRUCT()
+struct FPerfomanceMetricMetaData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString DisplayName{};
+	UPROPERTY()
+	bool bIsHigherBetter{};
+};
+
 USTRUCT()
 struct FPerfomanceTestRegionMetrics
 {
 	GENERATED_BODY()
 
+	FPerfomanceTestRegionMetrics()
+	{
+		Metrics.SetNum(static_cast<uint8>(EMetricType::COUNT));
+	}
+	
 	UPROPERTY()
 	FString RegionName{};
 	UPROPERTY()
-	FString FrameMilliseconds{};
-	UPROPERTY()
-	FString MaxFPSDelta{};
-	UPROPERTY()
-	FString TicksPerSecond{};
+	TArray<FString> Metrics{};
 
 	void SetFrameMilliseconds(float _frameTime);
 	void SetFPSDelta(float _fpsDelta);
@@ -28,9 +49,10 @@ struct FPerfomanceTestRegionMetrics
 	void Reset()
 	{
 		RegionName.Reset();
-		MaxFPSDelta.Reset();
-		TicksPerSecond.Reset();
-		FrameMilliseconds.Reset();
+		for(int32 i = 0; i < Metrics.Num(); ++i)
+		{
+			Metrics[i].Reset();
+		}
 	}
 };
 
@@ -39,10 +61,20 @@ struct FPerfomanceTestLevelMetrics
 {
 	GENERATED_BODY()
 
+	FPerfomanceTestLevelMetrics()
+	{
+		MetricsMetaData.SetNum(static_cast<uint8>(EMetricType::COUNT));
+		MetricsMetaData[static_cast<uint8>(EMetricType::FrameMilliseconds)]= {TEXT("Frame in milliseconds"), false};
+		MetricsMetaData[static_cast<uint8>(EMetricType::MaxFPSDelta)]= {TEXT("Max FPS delta"), false};
+		MetricsMetaData[static_cast<uint8>(EMetricType::TicksPerSecond)]= {TEXT("Ticks per second"), true};
+	}
+
 	UPROPERTY()
 	FString LevelName{};
 	UPROPERTY()
 	FString PerfomanceTestDate{};
+	UPROPERTY()
+	TArray<FPerfomanceMetricMetaData> MetricsMetaData{};
 	UPROPERTY()
 	TArray<FPerfomanceTestRegionMetrics> RegionDatas{};
 };
