@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MathUtil.h"
 #include "PerfomanceTestTypes.generated.h"
 
 class ADP_PerfomancePoint_Actor;
@@ -16,18 +15,22 @@ struct FPerfomanceTestRegionMetrics
 	UPROPERTY()
 	FString RegionName{};
 	UPROPERTY()
-	float TicksPerSecond{};
+	FString FrameMilliseconds{};
 	UPROPERTY()
-	float MaxFPSDelta{};
+	FString MaxFPSDelta{};
 	UPROPERTY()
-	float FrameMilliseconds{};
+	FString TicksPerSecond{};
+
+	void SetFrameMilliseconds(float _frameTime);
+	void SetFPSDelta(float _fpsDelta);
+	void SetTicksPerSecond(float _tickPerSecond);
 	
 	void Reset()
 	{
 		RegionName.Reset();
-		MaxFPSDelta = 0.0f;
-		TicksPerSecond = 0.0f;
-		FrameMilliseconds = 0.0f;
+		MaxFPSDelta.Reset();
+		TicksPerSecond.Reset();
+		FrameMilliseconds.Reset();
 	}
 };
 

@@ -7,10 +7,28 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogPerfomanceTestSerialization, All, All)
 
+namespace
+{
+	const int32 Precision = 2;
+}
+
 namespace Displacement
 {
 	namespace Test
 	{
+		void ConvertFloatToDisplayString(FString& _targetString, float _inValue)
+		{
+			_targetString.Reset();
+
+			FNumberFormattingOptions numberFormat{};
+			numberFormat.MinimumIntegralDigits = 1;
+			numberFormat.MaximumIntegralDigits = 100000;
+			numberFormat.MinimumFractionalDigits = Precision;
+			numberFormat.MaximumFractionalDigits = Precision;
+
+			_targetString = FText::AsNumber(_inValue, &numberFormat).ToString().Replace(TEXT(","), TEXT(".")); 
+		}
+
 		bool WritePerfomanceTestData(const FString& _fileName, const FPerfomanceTestLevelMetrics& _testResult)
 		{
 			FString serializedData{};
