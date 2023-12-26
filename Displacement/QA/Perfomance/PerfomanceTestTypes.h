@@ -190,5 +190,27 @@ private:
 using FPositionInterpolator = FLinearInterpolator<FVector>;
 using FRotationInterpolator = FLinearInterpolator<FRotator>;
 
+class FPerfomancePointTransitioner
+{
+public:
+	FPerfomancePointTransitioner() = default;
+	bool IsInTransition() const { return !PositionInterpolator.IsFinished() || !RotationInterpolator.IsFinished(); }
+	bool IsNeedToCollectMetrics() const { return Timer.WaitDurationSeconds > 0.0f; }
+	void StartTransition(const AActor* _fromPoint, const AActor* _toPoint, const FString& _transitionName, float _transitionDuration);
+	void Tick(float _deltaTime);
+	void MoveToInterpolatedTransform(AActor* _targetActorToMove) const;
+	void SetMaxInterpolationValue() { SetInterpolationValue(1.0f); }
+	const FPerfomanceTestRegionMetrics& CollectTransitionMetrics();
+private:
+	FPositionInterpolator PositionInterpolator;
+	FRotationInterpolator RotationInterpolator;
+	
+	FFPSMetricsCollector MetricsCollector;
+	FPerfomanceTestRegionMetrics TransitionMetrics;
+	FPerfomanceTestTimer Timer;
+
+	void SetInterpolationValue(float _interpolationValue); 
+	void ResetTransitionData() { PositionInterpolator.ResetInterpolatorValue(); RotationInterpolator.ResetInterpolatorValue(); Timer.TimePassed = 0.0f; }
+};
 
 

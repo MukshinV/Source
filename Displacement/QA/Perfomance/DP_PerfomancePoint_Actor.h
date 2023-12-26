@@ -29,12 +29,12 @@ public:
 	virtual bool CanMoveToNextPoint() const override { return !IsRecording(); }
 	virtual bool CanMoveToNextStage() const override { return false; }
 	
-	virtual void OnRecorderEntered()  override {}
+	virtual void OnRecorderEntered(AActor* _recorder)  override {}
 	virtual void OnStartedStageRecording() override;
 	virtual void OnRecorderExit() override {}
 	
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Point Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Point Data", DisplayName="@WaitAmountSeconds")
 	float WaitAmountSeconds;
 
 	virtual void Tick(float _deltaSeconds) override;

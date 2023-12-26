@@ -28,30 +28,6 @@ struct FLevelPointsIterator
 	void ResetPointer() { CurrentRegionIndex = 0u; }
 };
 
-class FPerfomancePointTransitioner
-{
-public:
-	FPerfomancePointTransitioner() = default;
-	bool IsInTransition() const { return !PositionInterpolator.IsFinished() || !RotationInterpolator.IsFinished(); }
-	bool IsNeedToCollectMetrics() const { return Timer.WaitDurationSeconds > 0.0f; }
-	void StartTransition(const ADP_PerfomancePoint_Actor* _fromPoint, const ADP_PerfomancePoint_Actor* _toPoint, float _transitionDuration);
-	void Tick(float _deltaTime);
-	void MoveToInterpolatedTransform(AActor* _targetActorToMove) const;
-	void SetMaxInterpolationValue() { SetInterpolationValue(1.0f); }
-	const FPerfomanceTestRegionMetrics& CollectTransitionMetrics();
-private:
-	FPositionInterpolator PositionInterpolator;
-	FRotationInterpolator RotationInterpolator;
-	
-	FFPSMetricsCollector MetricsCollector;
-	FPerfomanceTestRegionMetrics TransitionMetrics;
-	FPerfomanceTestTimer Timer;
-
-	void SetInterpolationValue(float _interpolationValue); 
-	void ResetTransitionData() { PositionInterpolator.ResetInterpolatorValue(); RotationInterpolator.ResetInterpolatorValue(); Timer.TimePassed = 0.0f; }
-};
-
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DISPLACEMENT_API UDP_LevelPerfomanceRecorder_ACC : public UActorComponent
 {

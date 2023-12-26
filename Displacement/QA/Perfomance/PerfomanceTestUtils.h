@@ -25,5 +25,7 @@ namespace Displacement
 		bool WritePerfomanceTestData(const FString& _fileName, const FPerfomanceTestLevelMetrics& _testResult);
 		bool ReadPerfomanceTestList(FPerfomanceTestRequestCollection& _requests);
 		FString GetDiplayNameOfTransition(const ADP_PerfomancePoint_Actor* _fromPoint, const ADP_PerfomancePoint_Actor* _toPoint);
+		FString GetDiplayNameOfTransition(const FName& _fromName, const FName& _toName);
+
 	}
 }

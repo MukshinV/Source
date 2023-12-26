@@ -65,14 +65,14 @@ const FPerfomanceTestRegionMetrics& FPerfomancePointTransitioner::CollectTransit
 	return TransitionMetrics;
 }
 
-void FPerfomancePointTransitioner::StartTransition(const ADP_PerfomancePoint_Actor* _fromPoint, const ADP_PerfomancePoint_Actor* _toPoint, float _transitionDuration)
+void FPerfomancePointTransitioner::StartTransition(const AActor* _fromPoint, const AActor* _toPoint, const FString& _transitionName, float _transitionDuration)
 {
 	ResetTransitionData();
 
 	Timer.SetWaitDuration(_transitionDuration);
 	MetricsCollector.StartCollect();
 
-	TransitionMetrics.RegionName = Displacement::Test::GetDiplayNameOfTransition(_fromPoint, _toPoint);
+	TransitionMetrics.RegionName = _transitionName;
 
 	const FVector fromPosition = _fromPoint->GetActorLocation();
 	const FVector toPosition = _toPoint->GetActorLocation();
@@ -110,6 +110,7 @@ void UDP_LevelPerfomanceRecorder_ACC::EnterToCurrentPoint() const
 	ADP_PerfomancePoint_Actor* currentPoint = LevelPointsIterator.GetCurrent();
 
 	PointRecorder->SetRecordingPoint(currentPoint);
+	PointRecorder->SetRecordingActor(GetOwner());
 	PointRecorder->EnterRecordingPoint();
 }
 
@@ -220,8 +221,9 @@ void UDP_LevelPerfomanceRecorder_ACC::StartMoveOwnerToNextPoint()
 
 	const FPerfomancePointTransitionData* toPointData = LevelPointsIterator.GetCurrentTransitionData();
 	const EPerfomancePointTransitionMode transitionMode = toPointData->TransitionToPointMode;
-
-	PointTransitioner.StartTransition(fromPoint, toPoint, transitionMode == EPerfomancePointTransitionMode::Instant ? 0.0f : toPointData->TransitionDuration);
+	const FString transitionName = Displacement::Test::GetDiplayNameOfTransition(fromPoint, toPoint);
+	
+	PointTransitioner.StartTransition(fromPoint, toPoint, transitionName, transitionMode == EPerfomancePointTransitionMode::Instant ? 0.0f : toPointData->TransitionDuration);
 	
 	if(transitionMode == EPerfomancePointTransitionMode::Instant)
 	{

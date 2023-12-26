@@ -18,25 +18,24 @@ public:
 
 using TestPrefabUnit_F = FDP_PerfomanceTestPrefabUnit_QStruct;
 
-UCLASS()
+UCLASS(Abstract)
 class DISPLACEMENT_API ADP_PrefabPerfomancePoint_Actor : public ADP_PerfomancePoint_Actor
 {
 	GENERATED_BODY()
 public:
-	ADP_PrefabPerfomancePoint_Actor();
 	virtual FName GetRegionName() const override;
 
 	virtual bool IsValidForTesting() const override; 
 	virtual bool IsRecording() const override;
 	virtual bool CanMoveToNextStage() const override;
 	virtual void MoveToNextStage() override;
-	virtual void OnRecorderEntered() override;
+	virtual void OnRecorderEntered(AActor* _recorder) override;
 	virtual void OnStartedStageRecording() override;
+
+	virtual AActor* GetSpawnPoint() { return nullptr; }
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Point Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Point Data", DisplayName="@PrefabTable")
 	TObjectPtr<UDataTable> PrefabTable;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Point Data")
-	TObjectPtr<AActor> PrefabSpawnPoint;
 	UPROPERTY()
 	TObjectPtr<APrefabActor> CurrentPrefabActor;
 	
@@ -50,6 +49,7 @@ protected:
 		bool IsPassedAll() const { return CurrentPointer >= static_cast<uint32>(RowNames.Num()); }
 		bool IsLast() const { return CurrentPointer >= static_cast<uint32>(RowNames.Num() - 1); }
 		FName GetCurrentRow() const;
+		FName GetPreviousRow() const { return CurrentPointer == 0 ? FName{} : RowNames[CurrentPointer - 1]; }
 		TestPrefabUnit_F* GetPrefab(const UDataTable* _table) const;
 	} PrefabIterator;
 

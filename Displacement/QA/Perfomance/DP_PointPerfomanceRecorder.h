@@ -18,6 +18,7 @@ public:
 
 	bool IsOnRecordingPoint(const ADP_PerfomancePoint_Actor* _pointToCheck) const { return CurrentPoint == _pointToCheck; };
 	void SetRecordingPoint(ADP_PerfomancePoint_Actor* _pointToRecord);
+	void SetRecordingActor(AActor* _recordingActor);
 	void EnterRecordingPoint();
 	void ExitRecordingPoint();
 
@@ -27,6 +28,9 @@ public:
 private:
 	UPROPERTY()
 	TObjectPtr<ADP_PerfomancePoint_Actor> CurrentPoint;
+	UPROPERTY()
+	TObjectPtr<AActor> Recorder;
+	
 	FPerfomanceTestRegionMetrics PointMetrics;
 	FFPSMetricsCollector MetricsCollector;
 };

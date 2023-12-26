@@ -6,11 +6,6 @@
 #include "Prefab/PrefabActor.h"
 #include "PrefabricatorRuntime/Public/Utils/PrefabricatorFunctionLibrary.h"
 
-ADP_PrefabPerfomancePoint_Actor::ADP_PrefabPerfomancePoint_Actor()
-{
-	PrimaryActorTick.bCanEverTick = true;
-}
-
 FName ADP_PrefabPerfomancePoint_Actor::GetRegionName() const
 {
 	if(IsRecording())
@@ -23,12 +18,12 @@ FName ADP_PrefabPerfomancePoint_Actor::GetRegionName() const
 
 bool ADP_PrefabPerfomancePoint_Actor::IsValidForTesting() const
 {
-	return PrefabTable && PrefabSpawnPoint && Super::IsValidForTesting();
+	return PrefabTable != nullptr;
 }
 
 bool ADP_PrefabPerfomancePoint_Actor::IsRecording() const
 {
-	return Super::IsRecording() && CurrentPrefabActor;
+	return Super::IsRecording();
 }
 
 bool ADP_PrefabPerfomancePoint_Actor::CanMoveToNextStage() const
@@ -41,7 +36,7 @@ void ADP_PrefabPerfomancePoint_Actor::MoveToNextStage()
 	PrefabIterator.Next();
 }
 
-void ADP_PrefabPerfomancePoint_Actor::OnRecorderEntered()
+void ADP_PrefabPerfomancePoint_Actor::OnRecorderEntered(AActor* _recorder)
 {
 	PrefabIterator.Setup(PrefabTable);
 }
@@ -52,7 +47,7 @@ void ADP_PrefabPerfomancePoint_Actor::OnStartedStageRecording()
 
 	const UWorld* world = GetWorld();
 	const TestPrefabUnit_F* unit = PrefabIterator.GetPrefab(PrefabTable);
-	const FTransform& spawnTransform = PrefabSpawnPoint->GetActorTransform();
+	const FTransform& spawnTransform = GetSpawnPoint()->GetActorTransform();
 	
 	CurrentPrefabActor = UPrefabricatorBlueprintLibrary::SpawnPrefab(world, unit->PrefabUnit, spawnTransform, 0);
 }

@@ -20,7 +20,7 @@ public:
 	virtual bool CanMoveToNextPoint() const = 0;
 	virtual bool CanMoveToNextStage() const = 0;
 	
-	virtual void OnRecorderEntered() = 0;
+	virtual void OnRecorderEntered(AActor* _recorder) = 0;
 	virtual void OnStartedStageRecording() = 0;
 	virtual void OnRecorderExit() = 0;
 protected:

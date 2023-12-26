@@ -67,5 +67,10 @@ namespace Displacement
 			const FString toPointName = _toPoint->GetRegionName().ToString();
 			return FString::Printf(TEXT("Transition:%s--%s"), *fromPointName, *toPointName);
 		}
+
+		FString GetDiplayNameOfTransition(const FName& _fromName, const FName& _toName)
+		{
+			return FString::Printf(TEXT("Transition:%s--%s"), *_fromName.ToString(), *_toName.ToString());
+		}
 	}
 }
