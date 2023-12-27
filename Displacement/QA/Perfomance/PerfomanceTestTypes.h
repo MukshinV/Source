@@ -24,6 +24,8 @@ struct FPerfomanceMetricMetaData
 	UPROPERTY()
 	FString DisplayName{};
 	UPROPERTY()
+	FString Id{};
+	UPROPERTY()
 	bool bIsHigherBetter{};
 };
 
@@ -64,9 +66,9 @@ struct FPerfomanceTestLevelMetrics
 	FPerfomanceTestLevelMetrics()
 	{
 		MetricsMetaData.SetNum(static_cast<uint8>(EMetricType::COUNT));
-		MetricsMetaData[static_cast<uint8>(EMetricType::FrameMilliseconds)]= {TEXT("Frame in milliseconds"), false};
-		MetricsMetaData[static_cast<uint8>(EMetricType::MaxFPSDelta)]= {TEXT("Max FPS delta"), false};
-		MetricsMetaData[static_cast<uint8>(EMetricType::TicksPerSecond)]= {TEXT("Ticks per second"), true};
+		MetricsMetaData[static_cast<uint8>(EMetricType::FrameMilliseconds)]= {TEXT("Frame in milliseconds"), TEXT("FrameInMilliseconds"), false};
+		MetricsMetaData[static_cast<uint8>(EMetricType::MaxFPSDelta)]= {TEXT("Max FPS delta"), TEXT("MaxFPSDelta"), false};
+		MetricsMetaData[static_cast<uint8>(EMetricType::TicksPerSecond)]= {TEXT("Ticks per second"), TEXT("TicksPerSecond"), true};
 	}
 
 	UPROPERTY()
