@@ -9,7 +9,7 @@ DEFINE_LOG_CATEGORY_STATIC(LogPerfomanceTestSerialization, All, All)
 
 namespace
 {
-	const int32 Precision = 2;
+	const int32 Precision = 3;
 }
 
 namespace Displacement
@@ -20,13 +20,13 @@ namespace Displacement
 		{
 			_targetString.Reset();
 
-			FNumberFormattingOptions numberFormat{};
-			numberFormat.MinimumIntegralDigits = 1;
-			numberFormat.MaximumIntegralDigits = 100000;
-			numberFormat.MinimumFractionalDigits = Precision;
-			numberFormat.MaximumFractionalDigits = Precision;
+			const FString valueString = FString::SanitizeFloat(_inValue, Precision);
+			int32 foundIndex = -1;
 
-			_targetString = FText::AsNumber(_inValue, &numberFormat).ToString().Replace(TEXT(","), TEXT(".")); 
+			if(valueString.FindChar(TEXT('.'), foundIndex))
+			{
+				_targetString = valueString.Mid(0, foundIndex + Precision + 1);
+			}
 		}
 
 		bool WritePerfomanceTestData(const FString& _fileName, const FPerfomanceTestLevelMetrics& _testResult)
