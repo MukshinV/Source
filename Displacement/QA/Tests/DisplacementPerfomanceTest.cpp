@@ -4,11 +4,11 @@
 #include "Misc/AutomationTest.h"
 #include "TestUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "QA/Perfomance/DP_PerfomanceTestConfig_Actor.h"
+#include "Perfomance/DP_PerfomanceTestConfig_Actor.h"
 #include "Kismet/GameplayStatics.h"
-#include "QA/Perfomance/DP_LevelPerfomanceRecorder_ACC.h"
-#include "QA/Perfomance/DP_PerfomancePoint_Actor.h"
-#include "QA/Perfomance/PerfomanceTestUtils.h"
+#include "Perfomance/DP_LevelPerfomanceRecorder_ACC.h"
+#include "Perfomance/DP_PerfomancePoint_Actor.h"
+#include "Perfomance/PerfomanceTestUtils.h"
 
 IMPLEMENT_COMPLEX_AUTOMATION_TEST(DisplacementPerfomanceTest, "Displacement.Displacement.QA.Tests.PerfomanceTest",
                                   EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::PerfFilter);
@@ -73,7 +73,7 @@ namespace
 
 	void FPerfomanceTestLatentCommand::PrepareTest()
 	{
-		UWorld* world = Displacement::Test::GetTestWorld();
+		UWorld* world = Displacement::PerfomanceTest::GetTestWorld();
 		check(world);
 
 		FString levelName = UGameplayStatics::GetCurrentLevelName(world);
@@ -148,7 +148,7 @@ namespace
 		LevelRecorder->OnFinishedRecording().Clear();
 			
 		const UWorld* world = LevelRecorder->GetWorld();
-		Displacement::Test::WritePerfomanceTestData(UGameplayStatics::GetCurrentLevelName(world), _result);
+		Displacement::PerfomanceTest::WritePerfomanceTestData(UGameplayStatics::GetCurrentLevelName(world), _result);
 			
 		bIsTestFinished = true;
 	}
@@ -197,7 +197,7 @@ namespace
 void DisplacementPerfomanceTest::GetTests(TArray<FString>& _outBeautifiedNames, TArray<FString>& _outTestCommands) const
 {
 	FPerfomanceTestRequestCollection perfomanceTestRequest{};
-	Displacement::Test::ReadPerfomanceTestList(perfomanceTestRequest);
+	Displacement::PerfomanceTest::ReadPerfomanceTestList(perfomanceTestRequest);
 
 	TArray<int32> enabledMapsIndices{};
 

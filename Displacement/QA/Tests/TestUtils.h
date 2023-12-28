@@ -7,7 +7,7 @@
 
 namespace Displacement
 {
-	namespace Test
+	namespace PerfomanceTest
 	{
 		UWorld* GetTestWorld();
 

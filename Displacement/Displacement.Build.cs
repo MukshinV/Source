@@ -9,7 +9,15 @@ public class Displacement : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
-		PrivateDependencyModuleNames.AddRange(new string[] { "Json", "JsonUtilities", "PrefabricatorRuntime" });
+		PrivateDependencyModuleNames.AddRange
+		(
+		new string[]
+			{
+				"Json", 
+				"JsonUtilities",
+				"PerfomanceTest"
+			}
+		);
 
 		PrivateIncludePaths.AddRange(new string[] { ModuleDirectory });
 	}
