@@ -1,4 +1,5 @@
 ﻿
+#include "Camera/CameraComponent.h"
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
@@ -27,11 +28,13 @@ namespace
 			RecordIndex(0),
 			BindingIndex(0)
 		{}
+
+		bool IsAtTheStartOfInputRecord() const { return BindingIndex == 0; }
 		const FBindingsRecord* PeekCurrent() const;
+		const FInputRecord* GetCurrentRecord() const { return RecordIndex >= InputRecords.Num() ? nullptr : &InputRecords[RecordIndex]; }
 		const FBindingsRecord* GetNext();
 
 	private:
-		const FInputRecord* GetCurrentRecord() const { return RecordIndex >= InputRecords.Num() ? nullptr : &InputRecords[RecordIndex]; }
 		const FBindingsRecord* GetCurrentBinding() const
 		{
 			const FInputRecord* currentRecord = GetCurrentRecord();
@@ -58,7 +61,6 @@ namespace
 			return PeekCurrent();
 		}
 
-		++BindingIndex;
 		return PeekCurrent();
 	}
 
@@ -85,8 +87,13 @@ namespace
 		bool bIsInitialized;
 		
 		void PrepareTest();
+		void SetupPlayerPawn(const FInputRecord* _inputRecord) const;
+		void FillUpInputMap(const UEnhancedInputComponent* _inputComponent);
+
 		virtual bool Update() override;
 		const UInputAction* GetActionByName(const FString& _actionName) const;
+		void SimulateActionInput(const FBindingsRecord* _bindingsRecord) const;
+		void SimulateAxisInput(const FBindingsRecord* _bindingsRecord) const;
 	};
 
 	void FAutoWalkthroughLatentCommand::PrepareTest()
@@ -98,13 +105,28 @@ namespace
 		WorldStartTime = World->TimeSeconds;
 
 		const UEnhancedInputComponent* inputComponent = Cast<UEnhancedInputComponent>(playerController->InputComponent);
-		const TArray<TUniquePtr<FEnhancedInputActionEventBinding>>& actionBindings = inputComponent->GetActionEventBindings();
+		FillUpInputMap(inputComponent);
+	}
+
+	void FAutoWalkthroughLatentCommand::SetupPlayerPawn(const FInputRecord* _inputRecord) const
+	{
+		if(!_inputRecord) return;
+
+		UCameraComponent* cameraComponent = PlayerPawn->FindComponentByClass<UCameraComponent>();
+		
+		PlayerPawn->SetActorTransform(_inputRecord->InitialTransform);
+		cameraComponent->SetRelativeRotation(_inputRecord->CameraRotation);
+	}
+
+	void FAutoWalkthroughLatentCommand::FillUpInputMap(const UEnhancedInputComponent* _inputComponent)
+	{
+		const TArray<TUniquePtr<FEnhancedInputActionEventBinding>>& actionBindings = _inputComponent->GetActionEventBindings();
 
 		for (int32 i = 0; i < actionBindings.Num(); ++i)
 		{
 			const TUniquePtr<FEnhancedInputActionEventBinding>& actionBinding = actionBindings[i];
 			const UInputAction* inputAction = actionBinding->GetAction();
-			const FString& actionName = inputAction->GetName();\
+			const FString& actionName = inputAction->GetName();
 			
 			if(!InputActionMap.Contains(actionName))
 			{
@@ -121,37 +143,54 @@ namespace
 			bIsInitialized = true;
 		}
 
-		const FBindingsRecord* bindingsRecord = RecordIterator.PeekCurrent();
-		if(!bindingsRecord) return true;
-
-		if(World->TimeSeconds - WorldStartTime < bindingsRecord->WorldTime) return false;
+		if(RecordIterator.IsAtTheStartOfInputRecord())
+		{
+			SetupPlayerPawn(RecordIterator.GetCurrentRecord());
+		}
 		
-		for(int32 i = 0; i < bindingsRecord->ActionValues.Num(); ++i)
+		const FBindingsRecord* bindingsRecord = RecordIterator.PeekCurrent();
+		
+		while(bindingsRecord->WorldTime < World->TimeSeconds - WorldStartTime)
 		{
-			const UInputAction* inputAction = GetActionByName(bindingsRecord->ActionValues[i].ActionName); 
-			
-			const FActionRecord& actionRecord = bindingsRecord->ActionValues[i];
-			const FInputActionValue actionValue{actionRecord.ActionValue};
-			
-			PlayerInput->InjectInputForAction(inputAction, actionValue);
+			SimulateActionInput(bindingsRecord);
+			SimulateAxisInput(bindingsRecord);
+
+			bindingsRecord = RecordIterator.GetNext();
+			if(!bindingsRecord) return true;
 		}
 
-		for(int32 i = 0; i < bindingsRecord->AxisValues.Num(); ++i)
-		{
-			const UInputAction* inputAction = GetActionByName(bindingsRecord->AxisValues[i].AxisName); 
-			
-			const FAxisRecord& axisRecord = bindingsRecord->AxisValues[i];
-			const FInputActionValue actionValue{axisRecord.AxisValue};
-			
-			PlayerInput->InjectInputForAction(inputAction, actionValue);
-		}
-
-		return RecordIterator.GetNext() == nullptr;
+		return false;
 	}
 
 	const UInputAction* FAutoWalkthroughLatentCommand::GetActionByName(const FString& _actionName) const
 	{
 		return *InputActionMap.Find(_actionName);
+	}
+
+	void FAutoWalkthroughLatentCommand::SimulateActionInput(const FBindingsRecord* _bindingsRecord) const
+	{
+		for(int32 i = 0; i < _bindingsRecord->ActionValues.Num(); ++i)
+		{
+			const UInputAction* inputAction = GetActionByName(_bindingsRecord->ActionValues[i].ActionName); 
+			
+			const FActionRecord& actionRecord = _bindingsRecord->ActionValues[i];
+			const FInputActionValue actionValue{actionRecord.ActionValue};
+			
+			PlayerInput->InjectInputForAction(inputAction, actionValue);
+		}
+	}
+
+	void FAutoWalkthroughLatentCommand::SimulateAxisInput(const FBindingsRecord* _bindingsRecord) const
+	{
+		for(int32 i = 0; i < _bindingsRecord->AxisValues.Num(); ++i)
+		{
+			const UInputAction* inputAction = GetActionByName(_bindingsRecord->AxisValues[i].AxisName); 
+			
+			const FAxisRecord& axisRecord = _bindingsRecord->AxisValues[i];
+			const FInputActionValue actionValue{axisRecord.AxisValue};
+			
+			PlayerInput->InjectInputForAction(inputAction, actionValue);
+		}
 	}
 }
 
