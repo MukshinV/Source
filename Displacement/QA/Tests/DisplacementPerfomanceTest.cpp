@@ -73,7 +73,7 @@ namespace
 
 	void FPerfomanceTestLatentCommand::PrepareTest()
 	{
-		UWorld* world = Displacement::PerfomanceTest::GetTestWorld();
+		UWorld* world = Displacement::Test::GetTestWorld();
 		check(world);
 
 		FString levelName = UGameplayStatics::GetCurrentLevelName(world);
@@ -148,7 +148,7 @@ namespace
 		LevelRecorder->OnFinishedRecording().Clear();
 			
 		const UWorld* world = LevelRecorder->GetWorld();
-		Displacement::PerfomanceTest::WritePerfomanceTestData(UGameplayStatics::GetCurrentLevelName(world), _result);
+		Displacement::Test::WritePerfomanceTestData(UGameplayStatics::GetCurrentLevelName(world), _result);
 			
 		bIsTestFinished = true;
 	}
@@ -197,7 +197,7 @@ namespace
 void DisplacementPerfomanceTest::GetTests(TArray<FString>& _outBeautifiedNames, TArray<FString>& _outTestCommands) const
 {
 	FPerfomanceTestRequestCollection perfomanceTestRequest{};
-	Displacement::PerfomanceTest::ReadPerfomanceTestList(perfomanceTestRequest);
+	Displacement::Test::ReadPerfomanceTestList(perfomanceTestRequest);
 
 	TArray<int32> enabledMapsIndices{};
 
