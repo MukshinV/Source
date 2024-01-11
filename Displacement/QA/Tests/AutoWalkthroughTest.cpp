@@ -13,7 +13,9 @@
 #include "AutoWalkthrough/Core/AW_InputRecorder_ACC.h"
 
 IMPLEMENT_COMPLEX_AUTOMATION_TEST(AutoWalkthroughTest, "Displacement.Displacement.QA.Tests.AutoWalkthroughTest",
-                                  EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+                                  EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter);
+
+DEFINE_LOG_CATEGORY_STATIC(LogAutoWalkthrough, All, All);
 
 namespace
 {
@@ -64,6 +66,16 @@ namespace
 		return PeekCurrent();
 	}
 
+	struct AutoWalkthroughTimer
+	{
+		float TimeLimit{0.0f};
+		float StartTime{0.0f};
+		float TimePassed{0.0f};
+
+		bool IsTimeOut() const { return TimePassed >= TimeLimit; }
+		void Update(const UWorld* _world) { TimePassed = _world->TimeSeconds - StartTime; }
+	};
+
 	class FAutoWalkthroughLatentCommand : public IAutomationLatentCommand
 	{
 	public:
@@ -73,7 +85,7 @@ namespace
 			World(),
 			PlayerPawn(),
 			PlayerInput(),
-			WorldStartTime(0.0f),
+			WalkthroughTimer(),
 			bIsInitialized(false)
 		{}
 		
@@ -83,13 +95,14 @@ namespace
 		UWorld* World;
 		APawn* PlayerPawn;
 		UEnhancedPlayerInput* PlayerInput;
-		float WorldStartTime;
+		AutoWalkthroughTimer WalkthroughTimer;
 		bool bIsInitialized;
 		
 		void PrepareTest();
 		void SetupPlayerPawn(const FInputRecord* _inputRecord) const;
 		void FillUpInputMap(const UEnhancedInputComponent* _inputComponent);
-
+		void CalculateTimeLimit();
+		
 		virtual bool Update() override;
 		const UInputAction* GetActionByName(const FString& _actionName) const;
 		void SimulateActionInput(const FBindingsRecord* _bindingsRecord) const;
@@ -102,10 +115,11 @@ namespace
 		const APlayerController* playerController = World->GetFirstPlayerController();
 		PlayerInput = Cast<UEnhancedPlayerInput>(playerController->PlayerInput);
 		PlayerPawn = playerController->GetPawn();
-		WorldStartTime = World->TimeSeconds;
+		WalkthroughTimer.StartTime = World->TimeSeconds;
 
 		const UEnhancedInputComponent* inputComponent = Cast<UEnhancedInputComponent>(playerController->InputComponent);
 		FillUpInputMap(inputComponent);
+		CalculateTimeLimit();
 	}
 
 	void FAutoWalkthroughLatentCommand::SetupPlayerPawn(const FInputRecord* _inputRecord) const
@@ -135,6 +149,23 @@ namespace
 		}
 	}
 
+	void FAutoWalkthroughLatentCommand::CalculateTimeLimit()
+	{
+		WalkthroughTimer.TimeLimit = 0.0f;
+
+		for (int32 i = 0; i < RecordIterator.InputRecords.Num(); ++i)
+		{
+			const FInputRecord& inputRecord = RecordIterator.InputRecords[i];
+			const float startTime = inputRecord.Bindings[0].WorldTime;
+			const float endTime = inputRecord.Bindings[inputRecord.Bindings.Num() - 1].WorldTime;
+
+			WalkthroughTimer.TimeLimit += endTime - startTime;
+		}
+
+		//@TODO: Move tolerance to config
+		WalkthroughTimer.TimeLimit += 10.0f;
+	}
+
 	bool FAutoWalkthroughLatentCommand::Update()
 	{
 		if(!bIsInitialized)
@@ -149,8 +180,15 @@ namespace
 		}
 		
 		const FBindingsRecord* bindingsRecord = RecordIterator.PeekCurrent();
+		WalkthroughTimer.Update(World);
+
+		if(WalkthroughTimer.IsTimeOut())
+		{
+			UE_LOG(LogAutoWalkthrough, Error, TEXT("Test timeout"));
+			return true;
+		}
 		
-		while(bindingsRecord->WorldTime < World->TimeSeconds - WorldStartTime)
+		while(bindingsRecord->WorldTime < WalkthroughTimer.TimePassed)
 		{
 			SimulateActionInput(bindingsRecord);
 			SimulateAxisInput(bindingsRecord);
