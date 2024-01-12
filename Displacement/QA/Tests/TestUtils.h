@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Tests/AutomationCommon.h"
+#include "EngineUtils.h"
+#include "Misc/AutomationTest.h"
+#include "Kismet/GameplayStatics.h"
 
 namespace Displacement
 {
@@ -28,6 +31,15 @@ namespace Displacement
 		{
 			const UBlueprint* Blueprint = LoadObject<UBlueprint>(nullptr, *_name);
 			return (_world && Blueprint) ? _world->SpawnActor<T>(Blueprint->GeneratedClass, _transform) : nullptr;
+		}
+
+		template <typename T>
+		void GetAllActorsOfClass(UWorld* _world, TArray<T*>& _outArray)
+		{
+			for (TActorIterator<T> It(_world, T::StaticClass()); It; ++It)
+			{
+				_outArray.Add(*It);
+			}
 		}
 	}
 }

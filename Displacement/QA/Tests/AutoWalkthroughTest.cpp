@@ -1,5 +1,6 @@
 ﻿
 #include "Camera/CameraComponent.h"
+#include "Kismet/GameplayStatics.h"
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
@@ -60,7 +61,6 @@ namespace
 		{
 			++RecordIndex;
 			BindingIndex = 0;
-			return PeekCurrent();
 		}
 
 		return PeekCurrent();
@@ -73,7 +73,13 @@ namespace
 		float TimePassed{0.0f};
 
 		bool IsTimeOut() const { return TimePassed >= TimeLimit; }
-		void Update(const UWorld* _world) { TimePassed = _world->TimeSeconds - StartTime; }
+		void UpdateTimer(const UWorld* _world) { TimePassed = _world->TimeSeconds - StartTime; }
+	};
+
+	struct CheckpointsCounter
+	{
+		TArray<AAW_Checkpoint_QActor*> Checkpoints;
+		TArray<bool> IsPassedArray;
 	};
 
 	class FAutoWalkthroughLatentCommand : public IAutomationLatentCommand
@@ -86,6 +92,7 @@ namespace
 			PlayerPawn(),
 			PlayerInput(),
 			WalkthroughTimer(),
+			CheckpointsCounter(),
 			bIsInitialized(false)
 		{}
 		
@@ -96,17 +103,21 @@ namespace
 		APawn* PlayerPawn;
 		UEnhancedPlayerInput* PlayerInput;
 		AutoWalkthroughTimer WalkthroughTimer;
+		CheckpointsCounter CheckpointsCounter;
 		bool bIsInitialized;
 		
 		void PrepareTest();
 		void SetupPlayerPawn(const FInputRecord* _inputRecord) const;
 		void FillUpInputMap(const UEnhancedInputComponent* _inputComponent);
 		void CalculateTimeLimit();
+		void CollectCheckpoints();
+		void FinishTest();
 		
 		virtual bool Update() override;
 		const UInputAction* GetActionByName(const FString& _actionName) const;
 		void SimulateActionInput(const FBindingsRecord* _bindingsRecord) const;
 		void SimulateAxisInput(const FBindingsRecord* _bindingsRecord) const;
+		void OnPawnEnteredCheckpoint(const AAW_Checkpoint_QActor* _checkpoint, const APawn* _enteredPawn);
 	};
 
 	void FAutoWalkthroughLatentCommand::PrepareTest()
@@ -120,6 +131,7 @@ namespace
 		const UEnhancedInputComponent* inputComponent = Cast<UEnhancedInputComponent>(playerController->InputComponent);
 		FillUpInputMap(inputComponent);
 		CalculateTimeLimit();
+		CollectCheckpoints();
 	}
 
 	void FAutoWalkthroughLatentCommand::SetupPlayerPawn(const FInputRecord* _inputRecord) const
@@ -127,8 +139,10 @@ namespace
 		if(!_inputRecord) return;
 
 		UCameraComponent* cameraComponent = PlayerPawn->FindComponentByClass<UCameraComponent>();
+		APlayerController* playerController = Cast<APlayerController>(PlayerPawn->GetController());
 		
 		PlayerPawn->SetActorTransform(_inputRecord->InitialTransform);
+		playerController->SetControlRotation(_inputRecord->InitialTransform.Rotator());
 		cameraComponent->SetRelativeRotation(_inputRecord->CameraRotation);
 	}
 
@@ -166,6 +180,30 @@ namespace
 		WalkthroughTimer.TimeLimit += 10.0f;
 	}
 
+	void FAutoWalkthroughLatentCommand::CollectCheckpoints()
+	{
+		Displacement::Test::GetAllActorsOfClass<AAW_Checkpoint_QActor>(World, CheckpointsCounter.Checkpoints);
+		CheckpointsCounter.IsPassedArray.SetNum(CheckpointsCounter.Checkpoints.Num());
+		
+		for(int32 i = 0; i < CheckpointsCounter.Checkpoints.Num(); ++i)
+		{
+			CheckpointsCounter.Checkpoints[i]->OnPawnEnteredCheckpoint().AddRaw(this, &FAutoWalkthroughLatentCommand::OnPawnEnteredCheckpoint);
+		}
+	}
+
+	void FAutoWalkthroughLatentCommand::FinishTest()
+	{
+		for(int32 i = 0; i < CheckpointsCounter.Checkpoints.Num(); ++i)
+		{
+			AAW_Checkpoint_QActor* checkpoint = CheckpointsCounter.Checkpoints[i];
+			checkpoint->OnPawnEnteredCheckpoint().RemoveAll(this);
+			if(!CheckpointsCounter.IsPassedArray[i])
+			{
+				UE_LOG(LogAutoWalkthrough, Error, TEXT("Checkpoint %s was not passed"), *checkpoint->GetCheckpointName());
+			}
+		}
+	}
+
 	bool FAutoWalkthroughLatentCommand::Update()
 	{
 		if(!bIsInitialized)
@@ -180,21 +218,26 @@ namespace
 		}
 		
 		const FBindingsRecord* bindingsRecord = RecordIterator.PeekCurrent();
-		WalkthroughTimer.Update(World);
+		WalkthroughTimer.UpdateTimer(World);
 
 		if(WalkthroughTimer.IsTimeOut())
 		{
 			UE_LOG(LogAutoWalkthrough, Error, TEXT("Test timeout"));
+			FinishTest();
 			return true;
 		}
 		
-		while(bindingsRecord->WorldTime < WalkthroughTimer.TimePassed)
+		while(WalkthroughTimer.TimePassed >= bindingsRecord->WorldTime)
 		{
 			SimulateActionInput(bindingsRecord);
 			SimulateAxisInput(bindingsRecord);
-
+			
 			bindingsRecord = RecordIterator.GetNext();
-			if(!bindingsRecord) return true;
+			if(!bindingsRecord)
+			{
+				FinishTest();
+				return true;
+			}
 		}
 
 		return false;
@@ -228,6 +271,19 @@ namespace
 			const FInputActionValue actionValue{axisRecord.AxisValue};
 			
 			PlayerInput->InjectInputForAction(inputAction, actionValue);
+		}
+	}
+
+	void FAutoWalkthroughLatentCommand::OnPawnEnteredCheckpoint(const AAW_Checkpoint_QActor* _checkpoint, const APawn* _enteredPawn)
+	{
+		if(_enteredPawn != PlayerPawn) return;
+
+		for(int32 i = 0; i < CheckpointsCounter.Checkpoints.Num(); ++i)
+		{
+			if(CheckpointsCounter.Checkpoints[i] == _checkpoint)
+			{
+				CheckpointsCounter.IsPassedArray[i] = true;
+			}
 		}
 	}
 }
