@@ -272,8 +272,6 @@ namespace
 			
 			const FAxisRecord& axisRecord = _bindingsRecord->AxisValues[i];
 			const FInputActionValue axisValue{axisRecord.AxisValue};
-
-			UE_LOG(LogTemp, Display, TEXT("%s : %s"), *inputAction->GetName(), *axisValue.ToString());
 			
 			PlayerInput->InjectInputForAction(inputAction, axisValue);
 		}
