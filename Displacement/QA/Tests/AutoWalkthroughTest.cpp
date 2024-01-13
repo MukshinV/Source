@@ -71,9 +71,11 @@ namespace
 		float TimeLimit{0.0f};
 		float StartTime{0.0f};
 		float TimePassed{0.0f};
+		float LastTimeStamp{0.0f};
 
 		bool IsTimeOut() const { return TimePassed >= TimeLimit; }
-		void UpdateTimer(const UWorld* _world) { TimePassed = _world->TimeSeconds - StartTime; }
+		float GetTimePassedSinceStamp() const { return TimePassed - LastTimeStamp; }
+		void UpdateTimer(const UWorld* _world) { LastTimeStamp = TimePassed; TimePassed = _world->TimeSeconds - StartTime; }
 	};
 
 	struct CheckpointsCounter
@@ -191,19 +193,6 @@ namespace
 		}
 	}
 
-	void FAutoWalkthroughLatentCommand::FinishTest()
-	{
-		for(int32 i = 0; i < CheckpointsCounter.Checkpoints.Num(); ++i)
-		{
-			AAW_Checkpoint_QActor* checkpoint = CheckpointsCounter.Checkpoints[i];
-			checkpoint->OnPawnEnteredCheckpoint().RemoveAll(this);
-			if(!CheckpointsCounter.IsPassedArray[i])
-			{
-				UE_LOG(LogAutoWalkthrough, Error, TEXT("Checkpoint %s was not passed"), *checkpoint->GetCheckpointName());
-			}
-		}
-	}
-
 	bool FAutoWalkthroughLatentCommand::Update()
 	{
 		if(!bIsInitialized)
@@ -217,7 +206,6 @@ namespace
 			SetupPlayerPawn(RecordIterator.GetCurrentRecord());
 		}
 		
-		const FBindingsRecord* bindingsRecord = RecordIterator.PeekCurrent();
 		WalkthroughTimer.UpdateTimer(World);
 
 		if(WalkthroughTimer.IsTimeOut())
@@ -226,7 +214,9 @@ namespace
 			FinishTest();
 			return true;
 		}
-		
+
+		const FBindingsRecord* bindingsRecord = RecordIterator.PeekCurrent();
+
 		while(WalkthroughTimer.TimePassed >= bindingsRecord->WorldTime)
 		{
 			SimulateActionInput(bindingsRecord);
@@ -243,6 +233,19 @@ namespace
 		return false;
 	}
 
+	void FAutoWalkthroughLatentCommand::FinishTest()
+	{
+		for(int32 i = 0; i < CheckpointsCounter.Checkpoints.Num(); ++i)
+		{
+			AAW_Checkpoint_QActor* checkpoint = CheckpointsCounter.Checkpoints[i];
+			checkpoint->OnPawnEnteredCheckpoint().RemoveAll(this);
+			if(!CheckpointsCounter.IsPassedArray[i])
+			{
+				UE_LOG(LogAutoWalkthrough, Error, TEXT("Checkpoint %s was not passed"), *checkpoint->GetCheckpointName());
+			}
+		}
+	}
+	
 	const UInputAction* FAutoWalkthroughLatentCommand::GetActionByName(const FString& _actionName) const
 	{
 		return *InputActionMap.Find(_actionName);
@@ -268,9 +271,11 @@ namespace
 			const UInputAction* inputAction = GetActionByName(_bindingsRecord->AxisValues[i].AxisName); 
 			
 			const FAxisRecord& axisRecord = _bindingsRecord->AxisValues[i];
-			const FInputActionValue actionValue{axisRecord.AxisValue};
+			const FInputActionValue axisValue{axisRecord.AxisValue};
+
+			UE_LOG(LogTemp, Display, TEXT("%s : %s"), *inputAction->GetName(), *axisValue.ToString());
 			
-			PlayerInput->InjectInputForAction(inputAction, actionValue);
+			PlayerInput->InjectInputForAction(inputAction, axisValue);
 		}
 	}
 
