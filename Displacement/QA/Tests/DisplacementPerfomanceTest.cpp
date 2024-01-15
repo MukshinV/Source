@@ -73,7 +73,7 @@ namespace
 
 	void FPerfomanceTestLatentCommand::PrepareTest()
 	{
-		UWorld* world = Displacement::PerfomanceTest::GetTestWorld();
+		UWorld* world = Displacement::Test::GetTestWorld();
 		check(world);
 
 		FString levelName = UGameplayStatics::GetCurrentLevelName(world);

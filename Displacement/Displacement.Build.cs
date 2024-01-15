@@ -14,8 +14,10 @@ public class Displacement : ModuleRules
 		new string[]
 			{
 				"Json", 
+				"EnhancedInput",
 				"JsonUtilities",
-				"PerfomanceTest"
+				"PerfomanceTest",
+				"AutoWalkthrough"
 			}
 		);
 
