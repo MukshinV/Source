@@ -151,12 +151,6 @@ namespace
 	bool FPerfomanceTestLatentCommand::IsRowNamesAndPointsNamesAreEqual(const FPerfomanceCollectResult& _collectResult, const TArray<FName>& rowNames) const
 	{
 		bool bIsAllConsistent = true;
-
-		for(const auto pointPair : _collectResult.PointsCollection)
-		{
-			UE_LOG(LogPerfomanceTest, Error, TEXT("Point name"), *pointPair.Key.ToString());
-		}
-		
 		
 		for (const FName& rowName : rowNames)
 		{
