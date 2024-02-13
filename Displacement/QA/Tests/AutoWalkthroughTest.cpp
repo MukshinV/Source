@@ -1,7 +1,4 @@
 ﻿
-
-#if WITH_AUTOMATION_TESTS
-
 #include "Misc/AutomationTest.h"
 #include "Tests/AutomationCommon.h"
 #include "TestUtils.h"
@@ -172,7 +169,7 @@ namespace
 	
 	void FAutoWalkthroughLatentCommand::PrepareTest()
 	{
-		World = Displacement::Test::GetTestWorld();
+		World = Displacement::GameTesting::GetTestWorld();
 		const APlayerController* playerController = World->GetFirstPlayerController();
 		PlayerInput = Cast<UEnhancedPlayerInput>(playerController->PlayerInput);
 		PlayerPawn = playerController->GetPawn();
@@ -239,7 +236,7 @@ namespace
 
 	void FAutoWalkthroughLatentCommand::CollectCheckpoints()
 	{
-		Displacement::Test::GetAllActorsOfClass<AAW_Checkpoint_QActor>(World, CheckpointsCounter.Checkpoints);
+		Displacement::GameTesting::GetAllActorsOfClass<AAW_Checkpoint_QActor>(World, CheckpointsCounter.Checkpoints);
 	}
 
 	bool FAutoWalkthroughLatentCommand::Update()
@@ -371,7 +368,7 @@ bool AutoWalkthroughTest::RunTest(const FString& _parameters)
 	TArray<FString> parsedParams{};
 	_parameters.ParseIntoArray(parsedParams, TEXT(";"));
 
-	AutomationOpenMap(parsedParams[1]);
+	Displacement::GameTesting::AutomationOpenMap(parsedParams[1]);
 
 	TArray<FInputRecord> recordsArray{};
 	AutoWalkthrough::ReadWalkthroughRecords(parsedParams[0], recordsArray);
@@ -380,7 +377,3 @@ bool AutoWalkthroughTest::RunTest(const FString& _parameters)
 	return true;
 }
 
-
-
-
-#endif

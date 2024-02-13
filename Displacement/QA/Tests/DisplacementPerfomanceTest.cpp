@@ -1,5 +1,4 @@
-﻿#if WITH_AUTOMATION_TESTS
-
+﻿
 #include "EngineUtils.h"
 #include "Misc/AutomationTest.h"
 #include "TestUtils.h"
@@ -73,13 +72,9 @@ namespace
 
 	void FPerfomanceTestLatentCommand::PrepareTest()
 	{
-		UWorld* world = Displacement::Test::GetTestWorld();
-		check(world);
+		UWorld* world = Displacement::GameTesting::GetTestWorld();
 
 		FString levelName = UGameplayStatics::GetCurrentLevelName(world);
-
-		const APlayerController* playerController = UGameplayStatics::GetPlayerController(world, 0);
-		check(playerController);
 
 		FPerfomanceCollectResult collectResult{};
 
@@ -156,6 +151,13 @@ namespace
 	bool FPerfomanceTestLatentCommand::IsRowNamesAndPointsNamesAreEqual(const FPerfomanceCollectResult& _collectResult, const TArray<FName>& rowNames) const
 	{
 		bool bIsAllConsistent = true;
+
+		for(const auto pointPair : _collectResult.PointsCollection)
+		{
+			UE_LOG(LogPerfomanceTest, Error, TEXT("Point name"), *pointPair.Key.ToString());
+		}
+		
+		
 		for (const FName& rowName : rowNames)
 		{
 			if(!_collectResult.PointsCollection.Contains(rowName))
@@ -226,12 +228,11 @@ bool DisplacementPerfomanceTest::RunTest(const FString& _parameters)
 
 	if (!TestTrue("Map name should exist", parsedParams.Num() == 1)) return false;
 
-	AutomationOpenMap(parsedParams[0]);
+	Displacement::GameTesting::AutomationOpenMap(parsedParams[0]);
 	
-	ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand{2.0f});
+	ADD_LATENT_AUTOMATION_COMMAND(Displacement::GameTesting::FWaitLatentCommand{2.0f});
 	ADD_LATENT_AUTOMATION_COMMAND(FPerfomanceTestLatentCommand{});
 	
 	return true;
 }
 
-#endif

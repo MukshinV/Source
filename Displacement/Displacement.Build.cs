@@ -1,5 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+using System;
 using UnrealBuildTool;
 
 public class Displacement : ModuleRules
@@ -20,6 +21,11 @@ public class Displacement : ModuleRules
 				"AutoWalkthrough"
 			}
 		);
+
+		if (Target.Configuration == UnrealTargetConfiguration.Test)
+		{
+			PublicDependencyModuleNames.Add("AutomationTest");
+		}
 
 		PrivateIncludePaths.AddRange(new string[] { ModuleDirectory });
 	}

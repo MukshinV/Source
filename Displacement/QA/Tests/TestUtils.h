@@ -1,30 +1,30 @@
 ﻿#pragma once
 
-#if WITH_AUTOMATION_TESTS
-
 #include "CoreMinimal.h"
-#include "Tests/AutomationCommon.h"
 #include "EngineUtils.h"
-#include "Misc/AutomationTest.h"
 #include "Kismet/GameplayStatics.h"
 
 namespace Displacement
 {
-	namespace Test
+	namespace GameTesting
 	{
+		class FWaitLatentCommand : public IAutomationLatentCommand
+		{
+		public:
+			FWaitLatentCommand(float _duration): Duration(_duration) {}
+		private:
+			float Duration;
+			
+			virtual bool Update() override;
+		};
+		
 		UWorld* GetTestWorld();
-
+		bool AutomationOpenMap(const FString& MapName, bool bForceReload = false);
+		
 		FORCEINLINE UDataTable* LoadTableFromPath(const FString& _path)
 		{
 			return Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *_path));
 		}
-
-		class LevelScope
-		{
-		public:
-			LevelScope(const FString& _mapName) { AutomationOpenMap(_mapName); }
-			~LevelScope() { ADD_LATENT_AUTOMATION_COMMAND(FExitGameCommand); }
-		};
 
 		template <typename T>
 		T* CreateBlueprint(UWorld* _world, const FString& _name, const FTransform& _transform = FTransform::Identity)
@@ -44,4 +44,3 @@ namespace Displacement
 	}
 }
 
-#endif
