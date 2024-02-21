@@ -11,5 +11,10 @@ public class DisplacementTarget : TargetRules
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_1;
 		ExtraModuleNames.Add("Displacement");
+
+		if (Target.Configuration == UnrealTargetConfiguration.Test)
+		{
+			bUseLoggingInShipping = true;
+		}
 	}
 }
