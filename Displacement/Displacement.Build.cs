@@ -18,7 +18,9 @@ public class Displacement : ModuleRules
 				"EnhancedInput",
 				"JsonUtilities",
 				"PerfomanceTest",
-				"AutoWalkthrough"
+				"AutoWalkthrough",
+				"DP_Core",
+				"DP_Characters"
 			}
 		);
 
