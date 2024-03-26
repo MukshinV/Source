@@ -53,24 +53,6 @@ void UDP_EffectVolumeReceiver_ACC::UpdateEffectAppearance(const FVector& _volume
 	OnVolumeBoundsChanged();
 }
 
-void UDP_EffectVolumeReceiver_ACC::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(UDP_EffectVolumeReceiver_ACC, VolumePosition);
-	DOREPLIFETIME(UDP_EffectVolumeReceiver_ACC, VolumeBounds);
-}
-
-void UDP_EffectVolumeReceiver_ACC::OnRep_VolumePosition()
-{
-	OnVolumePositionChanged();
-}
-
-void UDP_EffectVolumeReceiver_ACC::OnRep_VolumeBounds()
-{
-	OnVolumeBoundsChanged();
-}
-
 void UDP_EffectVolumeReceiver_ACC::OnVolumePositionChanged_Implementation()
 {
 }

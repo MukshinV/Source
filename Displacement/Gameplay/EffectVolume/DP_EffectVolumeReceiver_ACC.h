@@ -35,19 +35,12 @@ public:
 	UFUNCTION(BlueprintNativeEvent, DisplayName="!OnVolumeBoundsChanged(Virtual)")
 	void OnVolumeBoundsChanged();
 	
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing=OnRep_VolumePosition, DisplayName="@VolumePositionC")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, DisplayName="@VolumePositionC")
 	FVector VolumePosition;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing=OnRep_VolumeBounds, DisplayName="@VolumeBoundsC")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, DisplayName="@VolumeBoundsC")
 	FVector VolumeBounds;
 
-	UFUNCTION()
-	void OnRep_VolumePosition();
-	UFUNCTION()
-	void OnRep_VolumeBounds();
-	
 private:
 	UDP_EffectVolumeSystem_ACC* TryGetEffectVolumeSystem() const;
 };
